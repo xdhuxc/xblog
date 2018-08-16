@@ -12,9 +12,10 @@ class Config:
     Config类作为配置类的基类，其中配置通用信息，在其子类中分别定义专用配置。
     """
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'xdhuxc'
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # 将其设为True时，每次请求结束后都会自动提交数据库中的变动。
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
-    FLASKY_MAIL_USERNAME = os.environ.get('FLASKY_MAIL_USERNAME') | 'xdhuxc@163.com'
+    FLASKY_MAIL_USERNAME = os.environ.get('FLASKY_MAIL_USERNAME') or 'xdhuxc@163.com'
     FLASKY_MAIL_SERVER = 'smtp.163.com'
     FLASKY_MAIL_PASSWORD = 'xdhuxc'
     FLASKY_MAIL_PORT = 25
@@ -35,18 +36,18 @@ class DevelopmentConfig(Config):
     MAIL_PORT = 25
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    SQLALCHEMY_DATABASE_URL = os.environ.get('DEV_DATABASE_URL') or \
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'dev-data.sqlite')
 
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URL = os.environ.get('TEST_DATABASE_URL') or \
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'test-data.sqlite')
 
 
 class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URL = os.environ.get('DATABASE_URL') or \
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'prod-data.sqlite')
 
 config = {
