@@ -1,5 +1,9 @@
 # xblog
 
+### 启动程序
+```angular2html
+python manage.py runserver
+```
 
 ### 运行测试命令
 ```angular2html
