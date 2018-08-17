@@ -4,9 +4,11 @@
 from . import db
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+from flask_login import UserMixin
+from . import login_manager
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_name = db.Column(db.String(50), unique=True, index=True)
@@ -59,3 +61,9 @@ class Role(db.Model):
 
     def __repr__(self):
         return '<Role %r>' % self.role_name
+
+
+# Flask-Login要求程序实现一个回调函数，使用指定的标识符加载用户
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))

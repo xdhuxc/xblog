@@ -3,6 +3,8 @@
 
 from flask import render_template
 from . import auth
+from flask_login import login_required
+
 
 
 @auth.route('/login')
@@ -16,3 +18,9 @@ def login():
     为render_template()指定的模板文件保存在auth目录中，这个目录必须在app/template中创建，因为flask认为模板的路径是相对于程序模板目录而言的
     """
     return render_template('auth/login.html')
+
+
+@app.route('/secret')
+@login_required
+def secret():
+    return 'Only authenticated users are allowed!'

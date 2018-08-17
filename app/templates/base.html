@@ -1,0 +1,20 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %}
+Flask
+{% endblock %}
+
+{% block head %}  <!-- 定义图标 -->
+{{ super() }}
+<link rel="shortcut icon" href="{{ url_for('static', filename='image/favicon.ico') }}" type="image/x-icon">
+<link rel="icon" href="{{ url_for('static', filename='image/favicon.ico') }}" type="image/x-icon">
+{% endblock %}
+
+{% block scripts %} <!-- 引入 moment.js 库 -->
+{{ super() }}
+{{ moment.include_moment() }}
+{% endblock %}
+
+{% block navbar %}
+
+{% endblock %}

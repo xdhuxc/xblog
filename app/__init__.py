@@ -17,7 +17,12 @@ mail = Mail()
 moment = Moment()
 db = SQLAlchemy()
 login_manager = LoginManager()
+"""
+LoginManager对象的session_protection属性可以设为None，'basic'或'strong'，以提供不同的安全等级防止用户会话遭串改
+设为'strong'时，Flask-Login会记录客户端IP地址和浏览器的用户代理信息，如果发现异动，就退出用户。
+"""
 login_manager.session_protection = 'strong'
+# login_view 属性设置登录页面的端点，登录路由在蓝本auth中定义，因此要在前面加上蓝本auth的名字
 login_manager.login_view = 'auth.login'
 
 
