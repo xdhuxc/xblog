@@ -6,6 +6,8 @@ import os
 # 得到当前文件的上一级目录
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
+
 
 class Config:
     """
@@ -36,6 +38,7 @@ class DevelopmentConfig(Config):
     MAIL_PORT = 25
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    print("DEV_DATABASE_URL: %s" % os.environ.get('DEV_DATABASE_URL'))
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'dev-data.sqlite')
 
@@ -50,9 +53,11 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'prod-data.sqlite')
 
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
+
     'default': DevelopmentConfig
 }

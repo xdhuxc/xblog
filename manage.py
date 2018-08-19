@@ -13,6 +13,9 @@ from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
 import unittest
 
+# os.putenv('DEV_DATABASE_URL', 'mysql://root:19940423@localhost/xblog')
+# os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
+
 app = create_app(os.environ.get('FLASK_CONFIG') or 'default')
 manager = Manager(app)
 migrate = Migrate(app, db)
@@ -36,6 +39,15 @@ def test():
     # tests 为要测试的模块名或测试用例目录
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
+
+
+@manager.command
+def initdb():
+    """
+    以命令方式初始化数据库
+    :return:
+    """
+    db.create_all()
 
 
 if __name__ == '__main__':
