@@ -9,12 +9,17 @@ python manage.py runserver
 ```angular2html
 python manage.py test
 ```
-### 创建数据表或升级
-创建migrations迁移目录
+### 数据库迁移
+第一次，初始化，创建migrations迁移目录
 ```angularjs
 python manage.py db init 
 ```
-升级数据库
+#### 数据库迁移一般分为两步
+1、生成迁移的脚本
+```angularjs
+python manage.py db migrate
+```
+2、运行脚本，更改数据库
 ```angular2html
 python manage.py db upgrade
 ```

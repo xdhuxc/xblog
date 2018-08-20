@@ -7,7 +7,15 @@ Flasky - login
 
 {% block page_content %}
 <div class="page-header">
-    <h1>Login</h1>
+    <h1>
+        Login
+    </h1>
+    <P>
+         New user?
+        <a href="{{ url_for('auth.register') }}" >
+            Click here to register
+        </a>
+    </P>
 </div>
 <div class="col-md-4" >
     {{ wtf.quick_form(form) }}

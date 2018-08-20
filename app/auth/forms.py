@@ -38,6 +38,10 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Register')
 
 
+    """
+    这个表单中还有两个自定义的验证函数，以方法的形式实现。
+    如果表单类中定义了以validate_开头且后面跟着字段名的方法，这个方法就和常规的验证函数一起调用。
+    """
     def validate_user_email(self, field):
         if User.query.filter_by(user_email=field.data).first():
             raise ValidationError('Email already registered.')

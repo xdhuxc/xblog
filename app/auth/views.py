@@ -12,7 +12,9 @@ from flask_login import logout_user
 
 from . import auth
 from .forms import LoginForm
+from .forms import RegistrationForm
 from ..models import User
+from .. import db
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -39,6 +41,20 @@ def login():
     为render_template()指定的模板文件保存在auth目录中，这个目录必须在app/template中创建，因为flask认为模板的路径是相对于程序模板目录而言的
     """
     return render_template('auth/login.html', form=form)
+
+
+@auth.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(user_email=form.user_email.data,
+                    user_name=form.user_name.data,
+                    password=form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('You can now login.')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/register.html', form=form)
 
 
 @auth.route('/logout')

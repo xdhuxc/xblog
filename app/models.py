@@ -5,6 +5,8 @@
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from flask_login import UserMixin
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask import current_app
 from . import db
 from . import login_manager
 
@@ -16,6 +18,8 @@ class User(UserMixin, db.Model):
     user_email = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
+    # 是否已经确认该账户可使用邮箱联系
+    confirmed = db.Column(db.Boolean, default=False)
 
     def get_id(self):
         """
@@ -55,6 +59,34 @@ class User(UserMixin, db.Model):
         :return:
         """
         return check_password_hash(self.password_hash, password)
+
+    def generate_confirmation_token(self, expiration=3600):
+        """
+        生成一个令牌，有效期默认为一小时。
+        :param expiration:
+        :return:
+        """
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'confirm': self.user_id})
+
+    def confirm(self, token):
+        """
+        校验令牌，如果校验通过，则把新添加的confirmed属性设为True。
+        :param token:
+        :return:
+        """
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        # 检查令牌中的id是否和存储在current_user中的已登录用户匹配
+        if data.get('confirm') != self.user_id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        db.session.commit()
+        return True
 
 
 class Role(db.Model):
