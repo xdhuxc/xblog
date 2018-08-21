@@ -96,7 +96,9 @@ def before_request():
     如果请求满足以上3个条件，则会被重定向到/auth/unconfirmed路由，显示一个确认账户相关信息的页面。
     :return:
     """
-    if current_user.is_authenticated() and not current_user.confirmed and request.endpoint[:5] != 'auth.' \
+    if current_user.is_authenticated \
+            and not current_user.confirmed \
+            and request.endpoint[:5] != 'auth.' \
             and request.endpoint != 'static':
         return redirect(url_for('auth.unconfirmed'))
 
@@ -112,7 +114,7 @@ def resend_confirmation():
 
 @auth.route('/unconfirmed')
 def unconfirmed():
-    if current_user.is_anonymous() or current_user.confirmed:
+    if current_user.is_anonymous or current_user.confirmed:
         return redirect(url_for('main.index'))
     return render_template('auth/unconfirmed.html')
 
