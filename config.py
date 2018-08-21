@@ -8,6 +8,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
 
+"""
+wanghuanand@sohu.com
+smtp.sohu.com
+Wanghuan1994
+"""
 
 class Config:
     """
@@ -16,12 +21,16 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'xdhuxc'
     # 将其设为True时，每次请求结束后都会自动提交数据库中的变动。
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
-    FLASKY_MAIL_USERNAME = os.environ.get('FLASKY_MAIL_USERNAME') or 'xdhuxc@163.com'
-    FLASKY_MAIL_SERVER = 'smtp.163.com'
-    FLASKY_MAIL_PASSWORD = 'xdhuxc'
-    FLASKY_MAIL_PORT = 25
+    FLASKY_MAIL_SENDER = os.environ.get('FLASKY_MAIL_SENDER') or 'wanghuanand@sohu.com'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
+
+    # 邮箱配置
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.sohu.com')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', '25'))
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME', 'wanghuanand')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', 'Wanghuan1994')
 
     def __init__(self):
         pass
@@ -33,12 +42,6 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    # 邮箱配置
-    MAIL_SERVER = 'smtp.163.com'
-    MAIL_PORT = 25
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    print("DEV_DATABASE_URL: %s" % os.environ.get('DEV_DATABASE_URL'))
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'dev-data.sqlite')
 

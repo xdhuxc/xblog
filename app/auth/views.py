@@ -15,6 +15,8 @@ from .forms import LoginForm
 from .forms import RegistrationForm
 from ..models import User
 from .. import db
+from ..email import send_email
+from flask_login import current_user
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -45,6 +47,10 @@ def login():
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    用户注册后，将新用户添加到数据库后，发送确认电子邮件，并重定向到index.html
+    :return:
+    """
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(user_email=form.user_email.data,
@@ -52,8 +58,10 @@ def register():
                     password=form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('You can now login.')
-        return redirect(url_for('auth.login'))
+        token = user.generate_confirmation_token()
+        send_email(user.user_email, 'Confirm Your Account', 'auth/email/confirm', user=user, token=token)
+        flash('A confirmation email has been sent to you by email.')
+        return redirect(url_for('main.index'))
     return render_template('auth/register.html', form=form)
 
 
@@ -64,6 +72,63 @@ def logout():
     logout_user()
     flash('You have been logged out.')
     return redirect(url_for('main.index'))
+
+
+@auth.route('/confirm/<token>')
+@login_required
+def confirm(token):
+    if current_user.confirmed:
+        return redirect(url_for('main.index'))
+    if current_user.confirm(token):
+        flash('You have confirmed your account. Thanks!')
+    else:
+        flash('The confirmation link is invalid or has expired.')
+    return redirect(url_for('main.index'))
+
+
+@auth.before_app_request
+def before_request():
+    """
+    同时满足以下三个条件时，before_app_request处理程序会拦截请求：
+    1）用户已经登录（current_user.is_authenticated()必须返回True）
+    2）用户的账户还未确认
+    3）请求的端点（使用request.endpoint获取）不在auth蓝本中。访问认证路由要获取权限，因为这些路由的作用是让用户确认账户或执行其他账户管理操作
+    如果请求满足以上3个条件，则会被重定向到/auth/unconfirmed路由，显示一个确认账户相关信息的页面。
+    :return:
+    """
+    if current_user.is_authenticated() and not current_user.confirmed and request.endpoint[:5] != 'auth.' \
+            and request.endpoint != 'static':
+        return redirect(url_for('auth.unconfirmed'))
+
+
+@auth.route('/confirm')
+@login_required
+def resend_confirmation():
+    token = current_user.generate_confirmation_token()
+    send_email(current_user.user_email, 'Confirm Your Account', 'auth/email/confirm', user=current_user, token=token)
+    flash('A new confirmation email has been sent to you by email.')
+    return redirect(url_for('main.index'))
+
+
+@auth.route('/unconfirmed')
+def unconfirmed():
+    if current_user.is_anonymous() or current_user.confirmed:
+        return redirect(url_for('main.index'))
+    return render_template('auth/unconfirmed.html')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 """
 @app.route('/secret')
