@@ -7,6 +7,7 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
+os.environ['CHARSET'] = 'utf-8'
 
 """
 wanghuanand@sohu.com

@@ -23,7 +23,9 @@ from .. import db
 from ..email import send_email
 from flask_login import current_user
 
-charset = 'utf-8'
+import os
+
+charset = os.environ.get('CHARSET') or 'utf-8'
 reload(sys)
 # 设置编解码时默认的字符集，需要和文件的编码字符集一致，不设置的话，在windows下，默认为：ASCII
 sys.setdefaultencoding(charset)

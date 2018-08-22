@@ -10,6 +10,13 @@ from flask import current_app
 from . import db
 from . import login_manager
 
+import sys
+import os
+
+charset = os.environ.get('CHARSET') or 'utf-8'
+reload(sys)
+sys.setdefaultencoding(charset)
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
