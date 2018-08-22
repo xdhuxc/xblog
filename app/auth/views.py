@@ -18,6 +18,7 @@ from .forms import RegistrationForm
 from .forms import ChangePasswordForm
 from .forms import PasswordResetRequestForm
 from .forms import PasswordResetForm
+from .forms import ChangeEmailForm
 from ..models import User
 from .. import db
 from ..email import send_email
@@ -153,14 +154,11 @@ def change_password():
 
 @auth.route('/reset', methods=['GET', 'POST'])
 def password_reset_request():
-    print('password_reset_request')
     # 如果不是一个匿名用户，返回首页
     if not current_user.is_anonymous:
-        print(current_user.is_anonymous)
         return redirect(url_for('main.index'))
     form = PasswordResetRequestForm()
     if form.validate_on_submit():
-        print(form.validate_on_submit())
         # 查询用户信息
         user = User.query.filter_by(user_email=form.user_email.data).first()
         if user:
@@ -181,11 +179,42 @@ def password_reset(token):
         return redirect(url_for('main.index'))
     form = PasswordResetForm()
     if form.validate_on_submit():
-        if User
+        if User.reset_password(token, form.password.data):
+            db.session.commit()
+            flash('你的密码已经重置。')
+            return redirect(url_for('auth.login'))
+        else:
+            return redirect(url_for('main.index'))
+    return render_template('auth/reset_password.html', form=form)
 
 
+@auth.route('/change_email', methods=['GET', 'POST'])
+@login_required
+def change_email_request():
+    form = ChangeEmailForm()
+    if form.validate_on_submit():
+        # 判断密码是否合法
+        if current_user.verify_password(form.password.data):
+            new_email = form.user_email.data
+            token = current_user.generate_email_change_token(new_email)
+            send_email(new_email, '确认邮箱地址', 'auth/email/change_email', user=current_user, token=token)
+            flash('确认新邮箱的邮件已发送至 %s' % new_email)
+            return redirect(url_for('main.index'))
+        else:
+            flash('不合法的邮箱或密码。')
+    return render_template('auth/change_email.html', form=form)
 
 
+@auth.route('/change_email/<token>')
+@login_required
+def change_email(token):
+    if current_user.change_email(token):
+        db.session.commit()
+        flash('你的电子邮箱地址已经更改，请重新登录。')
+    else:
+        flash('请求错误。')
+    logout()
+    return redirect(url_for('main.index'))
 
 
 

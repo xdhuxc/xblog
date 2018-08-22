@@ -63,12 +63,29 @@ class ChangePasswordForm(FlaskForm):
 
 
 class PasswordResetRequestForm(FlaskForm):
+    """
+    重置密码请求表单
+    """
     user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
     submit = SubmitField('重置密码')
 
 
 class PasswordResetForm(FlaskForm):
+    """
+    重置密码表单
+    """
     password = PasswordField('新密码', validators=[
         DataRequired(), EqualTo('password2', message='两次输入的密码不一致。')])
     password2 = PasswordField('确认密码', validators=[DataRequired()])
     submit = SubmitField('重置密码')
+
+
+class ChangeEmailForm(FlaskForm):
+    user_email = StringField('新电子邮件地址', validators=[DataRequired(), Length(1, 64), Email()])
+    password = PasswordField('密码', validators=[DataRequired()])
+    submit = SubmitField('更改电子邮箱')
+
+    @staticmethod
+    def validate_user_email(self, field):
+        if User.query.filter_by(user_email=field.data).first():
+            raise ValidationError('该邮箱已经注册。')
