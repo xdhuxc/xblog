@@ -8,12 +8,14 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
 os.environ['CHARSET'] = 'utf-8'
+os.environ['FLASKY_ADMIN'] = 'xdhuxc@163.com'
 
 """
 wanghuanand@sohu.com
 smtp.sohu.com
 Wanghuan1994
 """
+
 
 class Config:
     """

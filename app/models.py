@@ -5,6 +5,7 @@
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from flask_login import UserMixin
+from flask_login import AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 from . import db
@@ -27,6 +28,16 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
     # 是否已经确认该账户可使用邮箱联系
     confirmed = db.Column(db.Boolean, default=False)
+
+    def __init__(self, **kwargs):
+        # 调用基类的构造函数
+        super(User, self).__init__(**kwargs)
+        # 如果创建基类对象后还没有定义角色，则根据电子邮箱地址决定将其设为管理员还是默认角色
+        if self.role is None:
+            if self.user_email == current_app.config['FLASKY_ADMIN']:
+                self.role = Role.query.filter_by(permissions=0xff).first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
 
     def get_id(self):
         """
@@ -123,12 +134,24 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    def can(self, permissions):
+        return self.role is not None and (self.role.permissions & permissions) == permissions
+
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
     %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
     """
     def __repr__(self):
         return '<User %r>' % self.user_name
+
+
+# Flask-Login要求程序实现一个回调函数，使用指定的标识符加载用户
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 class Role(db.Model):
@@ -139,13 +162,51 @@ class Role(db.Model):
     __tablename__ = 'roles'
     role_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     role_name = db.Column(db.String(50), unique=True)
+    # 只有一个角色的default字段需要设置为True，其他都为False，用户注册时，其角色会被设置为默认角色
+    default = db.Column(db.Boolean, default=False, index=True)
+    # 其值是一个整数，表示位标志，各操作都对应一个位位置，能执行某项操作的角色，其位会被设为1.
+    permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
+
+    @staticmethod
+    def insert_roles():
+        # 定义角色User，Moderator，Administrator，匿名角色不需要在数据库中表示出来，该角色的含义就是不在数据库中的用户
+        roles = {
+            'User': (Permission.FOLLOW | Permission.COMMENT | Permission.WRITE_ARTICLES, True),
+            'Moderator': (Permission.FOLLOW | Permission.COMMENT | Permission.WRITE_ARTICLES
+                          | Permission.MODERATE_COMMENTS, False),
+            'Administrator': (0xff, False)
+        }
+        """
+        通过角色名查找现有的角色，然后再进行更新。只有当数据库中没有某个角色时才会创建新角色对象。
+        """
+        for r in roles:
+            role = Role.query.filter_by(role_name=r).first()
+            if role is None:
+                role = Role(role_name=r)
+            role.permissions = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
 
     def __repr__(self):
         return '<Role %r>' % self.role_name
 
 
-# Flask-Login要求程序实现一个回调函数，使用指定的标识符加载用户
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+class Permission:
+    FOLLOW = 0X01
+    COMMENT = 0X02
+    WRITE_ARTICLES = 0X04
+    MODERATE_COMMENTS = 0X08
+    ADMINISTER = 0x80
+
+
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+
+
+login_manager.anonymous_user = AnonymousUser
