@@ -55,8 +55,13 @@ class ChangePasswordForm(FlaskForm):
     """
     更新密码的表单
     """
-    old_password = PasswordField('Old Password', validators=[DataRequired()])
-    password = PasswordField('New Password', validators=[
+    old_password = PasswordField('旧密码', validators=[DataRequired()])
+    password = PasswordField('新密码', validators=[
         DataRequired(), EqualTo('password2', message='Passwords must match.')])
-    password2 = PasswordField('Confirm new password', validators=[DataRequired()])
-    submit = SubmitField('Update Password')
+    password2 = PasswordField('确认新密码', validators=[DataRequired()])
+    submit = SubmitField('更新密码')
+
+
+class PasswordResetRequestForm(FlaskForm):
+    user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
+    submit = SubmitField('重置密码')

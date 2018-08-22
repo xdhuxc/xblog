@@ -4,6 +4,10 @@
 ```angular2html
 python manage.py runserver
 ```
+### 账户
+xdhuxc@163.com cat
+
+https://news.cnblogs.com/n/605020/
 
 ### 运行测试命令
 ```angular2html

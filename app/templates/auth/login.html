@@ -10,14 +10,15 @@ Flasky - login
     <h1>
         Login
     </h1>
-    <P>
-         New user?
-        <a href="{{ url_for('auth.register') }}" >
-            Click here to register
-        </a>
-    </P>
 </div>
 <div class="col-md-4" >
     {{ wtf.quick_form(form) }}
+    <br>
+    <p>
+        忘记密码？<a href="{{ url_for('auth.password_reset_request') }}"> 点击这里重置 </a>
+    </p>
+    <P>
+        没有账户？<a href="{{ url_for('auth.register') }}"> 点击这里注册 </a>
+    </P>
 </div>
 {% endblock %}

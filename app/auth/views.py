@@ -14,6 +14,7 @@ from . import auth
 from .forms import LoginForm
 from .forms import RegistrationForm
 from .forms import ChangePasswordForm
+from .forms import PasswordResetRequestForm
 from ..models import User
 from .. import db
 from ..email import send_email
@@ -123,17 +124,41 @@ def unconfirmed():
 @auth.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
+    """
+    修改密码，修改成功后跳转至首页
+    :return:
+    """
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if current_user.verify_password(form.old_password.data):
             current_user.password = form.password.data
             db.session.add(current_user)
             db.session.commit()
-            flash('Your password has been updated.')
+            flash('密码已经更新！')
+            return redirect(url_for('main.index'))
         else:
-            flash('Invalid password.')
+            flash('密码错误！')
     return render_template('auth/change_password.html', form=form)
 
+
+@auth.route('/reset', methods=['GET', 'POST'])
+def password_reset_request():
+    # 如果不是一个匿名用户，返回首页
+    if not current_user.is_anonymous:
+        return redirect(url_for('main.index'))
+    form = PasswordResetRequestForm()
+    if form.validate_on_submit():
+        # 查询用户信息
+        user = User.query.filter_by(user_email=form.user_email.data).first()
+        if user:
+            # 生成 token
+            token = user.generate_confirmation_token()
+            # 发送重置密码的确认邮件
+            send_email(user.user_email, '重置密码', 'auth/email/reset_password', user=user, token=token)
+            flash('重置密码的邮件已经发送至你的邮箱 %s' % user.user_email)
+            # 跳转首页？登录页？（其实在同一个页面）
+            return redirect(url_for('auth.login'))
+    return render_template('auth/reset_password.html', form=form)
 
 
 
