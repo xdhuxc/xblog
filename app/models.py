@@ -36,14 +36,6 @@ class User(UserMixin, db.Model):
         return unicode(self.user_id)
 
     """
-    %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
-    %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
-
-    """
-    def __repr__(self):
-        return '<User %r>' % self.user_name
-
-    """
     python内置的@property装饰器负责把一个方法变成属性调用。
     把一个getter方法变成属性，只需要加上@property就可以了
     可以定义只读属性，只定义getter方法，不定义setter方法就是一个只读属性
@@ -94,6 +86,49 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         db.session.commit()
         return True
+
+    @staticmethod
+    def reset_password(token, new_password):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode(charset))
+            print("data:" + data)
+            print("data-reset:" + data.get('reset'))
+        except:
+            return False
+        user = User.query.get(data.get('reset'))
+        if user is None:
+            return False
+        user.password = new_password
+        db.session.add(user)
+        return True
+
+    def generate_email_change_token(self, new_email, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'change_email': self.user_id, 'new_email':new_email}).decode(charset)
+
+    def change_email(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode(charset))
+        except:
+            return False
+        new_email = data.get('new_email')
+        if new_email is None:
+            return False
+        # 查看数据库中是否已经有该email
+        if self.query.filter_by(user_email=new_email).first() is not None:
+            return False
+        self.user_email = new_email
+        db.session.add(self)
+        return True
+
+    """
+    %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
+    %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
+    """
+    def __repr__(self):
+        return '<User %r>' % self.user_name
 
 
 class Role(db.Model):
