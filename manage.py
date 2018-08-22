@@ -13,8 +13,6 @@ from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
 import unittest
 
-# os.putenv('DEV_DATABASE_URL', 'mysql://root:19940423@localhost/xblog')
-# os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
 
 app = create_app(os.environ.get('FLASK_CONFIG') or 'default')
 manager = Manager(app)

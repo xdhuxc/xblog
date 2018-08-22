@@ -170,3 +170,158 @@ def get_id(self):
     # 返回一个能唯一识别用户的，并能用于从 user_loader 回调中 加载用户的 unicode 。注意着 必须 是一个 unicode ——如果 ID 原本是 一个 int 或其它类型，你需要把它转换为 unicode。
     return unicode(self.user_id)
 ```
+
+3、初始化数据库时，报错如下：（mysql版本为：8.0.12）
+```angular2html
+(venv) D:\PycharmProject\xblog>python manage.py db upgrade
+Traceback (most recent call last):
+  File "manage.py", line 54, in <module>
+    manager.run()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_script\__init__.py", line 417, in run
+    result = self.handle(argv[0], argv[1:])
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_script\__init__.py", line 386, in handle
+    res = handle(*args, **config)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_script\commands.py", line 216, in __call__
+    return self.run(*args, **kwargs)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_migrate\__init__.py", line 95, in wrapped
+    f(*args, **kwargs)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_migrate\__init__.py", line 280, in upgrade
+    command.upgrade(config, revision, sql=sql, tag=tag)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\alembic\command.py", line 254, in upgrade
+    script.run_env()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\alembic\script\base.py", line 427, in run_env
+    util.load_python_file(self.dir, 'env.py')
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\alembic\util\pyfiles.py", line 81, in load_python_file
+    module = load_module_py(module_id, path)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\alembic\util\compat.py", line 135, in load_module_py
+    mod = imp.load_source(module_id, path, fp)
+  File "migrations\env.py", line 87, in <module>
+    run_migrations_online()
+  File "migrations\env.py", line 72, in run_migrations_online
+    connection = engine.connect()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\base.py", line 2102, in connect
+    return self._connection_cls(self, **kwargs)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\base.py", line 90, in __init__
+    if connection is not None else engine.raw_connection()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\base.py", line 2188, in raw_connection
+    self.pool.unique_connection, _connection)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\base.py", line 2162, in _wrap_pool_connect
+    e, dialect, self)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\base.py", line 1476, in _handle_dbapi_exception_noconnection
+    exc_info
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\util\compat.py", line 265, in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\base.py", line 2158, in _wrap_pool_connect
+    return fn()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 345, in unique_connection
+    return _ConnectionFairy._checkout(self)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 791, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 532, in checkout
+    rec = pool._do_get()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 1287, in _do_get
+    return self._create_connection()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 350, in _create_connection
+    return _ConnectionRecord(self)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 477, in __init__
+    self.__connect(first_connect_check=True)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\pool.py", line 674, in __connect
+    connection = pool._invoke_creator(self)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\strategies.py", line 106, in connect
+    return dialect.connect(*cargs, **cparams)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\default.py", line 412, in connect
+    return self.dbapi.connect(*cargs, **cparams)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\MySQLdb\__init__.py", line 81, in Connect
+    return Connection(*args, **kwargs)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\MySQLdb\connections.py", line 193, in __init__
+    super(Connection, self).__init__(*args, **kwargs2)
+sqlalchemy.exc.OperationalError: (_mysql_exceptions.OperationalError) (1251, 'Client does not support authentication protocol requested b
+y server; consider upgrading MySQL client') (Background on this error at: http://sqlalche.me/e/e3q8)
+```
+```angular2html
+use sys;
+alter user 'root'@'localhost' identified with mysql_native_password by '19940423';
+```
+4、使用中文后，渲染模板时报错：
+```angular2html
+(venv) D:\PycharmProject\xblog>python manage.py runserver
+ * Serving Flask app "app" (lazy loading)
+ * Environment: production
+   WARNING: Do not use the development server in a production environment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 265-864-630
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+D:\PycharmProject\xblog\venv\lib\site-packages\sqlalchemy\engine\default.py:509: Warning: Incorrect string value: '\xD6\xD0\xB9\xFA\xB1\x
+EA...' for column 'VARIABLE_VALUE' at row 518
+  cursor.execute(statement, parameters)
+127.0.0.1 - - [22/Aug/2018 10:51:46] "GET /auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [22/Aug/2018 10:51:48] "POST /auth/login HTTP/1.1" 302 -
+127.0.0.1 - - [22/Aug/2018 10:51:48] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [22/Aug/2018 10:51:55] "GET /auth/change_password HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 2309, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 2295, in wsgi_app
+    response = self.handle_exception(e)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 1741, in handle_exception
+    reraise(exc_type, exc_value, tb)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_login\utils.py", line 261, in decorated_view
+    return func(*args, **kwargs)
+  File "D:\PycharmProject\xblog\app\auth\views.py", line 141, in change_password
+    return render_template('auth/change_password.html', form=form)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\templating.py", line 135, in render_template
+    context, ctx.app)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask\templating.py", line 117, in _render
+    rv = template.render(context)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\jinja2\environment.py", line 1008, in render
+    return self.environment.handle_exception(exc_info, True)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\jinja2\environment.py", line 780, in handle_exception
+    reraise(exc_type, exc_value, tb)
+  File "D:\PycharmProject\xblog\app\templates\auth\change_password.html", line 2, in top-level template code
+    {% import "bootstrap/wtf.html" as wtf %}
+  File "D:\PycharmProject\xblog\app\templates\base.html", line 1, in top-level template code
+    {% extends "bootstrap/base.html" %}
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_bootstrap\templates\bootstrap\base.html", line 1, in top-level template code
+
+    {% block doc -%}
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_bootstrap\templates\bootstrap\base.html", line 4, in block "doc"
+    {%- block html %}
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_bootstrap\templates\bootstrap\base.html", line 20, in block "html"
+    {% block body -%}
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_bootstrap\templates\bootstrap\base.html", line 23, in block "body"
+    {% block content -%}
+  File "D:\PycharmProject\xblog\app\templates\base.html", line 69, in block "content"
+    {% block page_content %}
+  File "D:\PycharmProject\xblog\app\templates\auth\change_password.html", line 13, in block "page_content"
+    {{ wtf.quick_form(form) }}
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\jinja2\runtime.py", line 579, in _invoke
+    rv = self._func(*arguments)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_bootstrap\templates\bootstrap\wtf.html", line 205, in template
+    {{ form_field(field,
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\jinja2\runtime.py", line 579, in _invoke
+    rv = self._func(*arguments)
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\flask_bootstrap\templates\bootstrap\wtf.html", line 119, in template
+    {{field.label(class="control-label")|safe}}
+  File "D:\PycharmProject\xblog\venv\lib\site-packages\wtforms\fields\core.py", line 402, in __call__
+    return widgets.HTMLString('<label %s>%s</label>' % (attributes, text or self.text))
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xe6 in position 0: ordinal not in range(128)
+```
+在 相应的views.py文件中添加如下代码，指定编码方式
+```angular2html
+charset = 'utf-8'
+reload(sys)
+sys.setdefaultencoding(charset)
+```

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
 from flask import render_template
 from flask import redirect
 from flask import request
@@ -15,10 +17,16 @@ from .forms import LoginForm
 from .forms import RegistrationForm
 from .forms import ChangePasswordForm
 from .forms import PasswordResetRequestForm
+from .forms import PasswordResetForm
 from ..models import User
 from .. import db
 from ..email import send_email
 from flask_login import current_user
+
+charset = 'utf-8'
+reload(sys)
+# 设置编解码时默认的字符集，需要和文件的编码字符集一致，不设置的话，在windows下，默认为：ASCII
+sys.setdefaultencoding(charset)
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -134,7 +142,7 @@ def change_password():
             current_user.password = form.password.data
             db.session.add(current_user)
             db.session.commit()
-            flash('密码已经更新！')
+            flash('密码已经修改！')
             return redirect(url_for('main.index'))
         else:
             flash('密码错误！')
@@ -143,11 +151,14 @@ def change_password():
 
 @auth.route('/reset', methods=['GET', 'POST'])
 def password_reset_request():
+    print('password_reset_request')
     # 如果不是一个匿名用户，返回首页
     if not current_user.is_anonymous:
+        print(current_user.is_anonymous)
         return redirect(url_for('main.index'))
     form = PasswordResetRequestForm()
     if form.validate_on_submit():
+        print(form.validate_on_submit())
         # 查询用户信息
         user = User.query.filter_by(user_email=form.user_email.data).first()
         if user:
@@ -158,11 +169,17 @@ def password_reset_request():
             flash('重置密码的邮件已经发送至你的邮箱 %s' % user.user_email)
             # 跳转首页？登录页？（其实在同一个页面）
             return redirect(url_for('auth.login'))
+    # 使用GET请求第一次访问时，渲染重置密码的表单
     return render_template('auth/reset_password.html', form=form)
 
 
-
-
+@auth.route('/reset/<token>', methods=['GET', 'POST'])
+def password_reset(token):
+    if not current_user.is_anonymous:
+        return redirect(url_for('main.index'))
+    form = PasswordResetForm()
+    if form.validate_on_submit():
+        if User
 
 
 

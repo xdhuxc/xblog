@@ -21,21 +21,21 @@ class LoginForm(FlaskForm):
     """
     用户登录表单
     """
-    user_email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Keep me login')
-    submit = SubmitField('Login')
+    user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
+    password = PasswordField('密码', validators=[DataRequired()])
+    remember_me = BooleanField('记住我')
+    submit = SubmitField('登录')
 
 
 class RegistrationForm(FlaskForm):
     # 第一个参数是在页面显示的字符
-    user_email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
-    user_name = StringField('User Name', validators=[DataRequired(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$',
+    user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
+    user_name = StringField('用户名', validators=[DataRequired(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$',
         0, 'User Name must have two letters,numbers dots or underscores')])
-    password = PasswordField('Password', validators=[DataRequired(), EqualTo('password2',
+    password = PasswordField('密码', validators=[DataRequired(), EqualTo('password2',
                                                                              message='Passwords must match.')])
-    password2 = PasswordField('Confirm Password', validators=[DataRequired()])
-    submit = SubmitField('Register')
+    password2 = PasswordField('确认密码', validators=[DataRequired()])
+    submit = SubmitField('注册')
 
 
     """
@@ -59,9 +59,16 @@ class ChangePasswordForm(FlaskForm):
     password = PasswordField('新密码', validators=[
         DataRequired(), EqualTo('password2', message='Passwords must match.')])
     password2 = PasswordField('确认新密码', validators=[DataRequired()])
-    submit = SubmitField('更新密码')
+    submit = SubmitField('更改密码')
 
 
 class PasswordResetRequestForm(FlaskForm):
     user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
+    submit = SubmitField('重置密码')
+
+
+class PasswordResetForm(FlaskForm):
+    password = PasswordField('新密码', validators=[
+        DataRequired(), EqualTo('password2', message='两次输入的密码不一致。')])
+    password2 = PasswordField('确认密码', validators=[DataRequired()])
     submit = SubmitField('重置密码')
