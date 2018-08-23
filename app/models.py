@@ -19,6 +19,14 @@ reload(sys)
 sys.setdefaultencoding(charset)
 
 
+class Permission:
+    FOLLOW = 1
+    COMMENT = 2
+    WRITE = 4
+    MODERATE = 8
+    ADMIN = 16
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -35,7 +43,7 @@ class User(UserMixin, db.Model):
         # 如果创建基类对象后还没有定义角色，则根据电子邮箱地址决定将其设为管理员还是默认角色
         if self.role is None:
             if self.user_email == current_app.config['FLASKY_ADMIN']:
-                self.role = Role.query.filter_by(permissions=0xff).first()
+                self.role = Role.query.filter_by(role_name='Administrator').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
 
@@ -124,6 +132,8 @@ class User(UserMixin, db.Model):
             data = s.loads(token.encode(charset))
         except:
             return False
+        if data.get('change_email') != self.user_id:
+            return False
         new_email = data.get('new_email')
         if new_email is None:
             return False
@@ -134,11 +144,11 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
-    def can(self, permissions):
-        return self.role is not None and (self.role.permissions & permissions) == permissions
+    def can(self, perm):
+        return self.role is not None and self.role.has_permission(perm)
 
     def is_administrator(self):
-        return self.can(Permission.ADMINISTER)
+        return self.can(Permission.ADMIN)
 
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
@@ -168,15 +178,50 @@ class Role(db.Model):
     permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
 
+    def __init__(self, **kwargs):
+        super(Role, self).__init__(**kwargs)
+        if self.permissions is None:
+            self.permissions = 0
+
+    def has_permission(self, perm):
+        """
+        检查一个角色是否拥有某个权限，将当前对象的权限值整数的二进制与传入的权限值二进制进行&操作，然后再判断与传入值是否相等
+        :param perm:
+        :return:
+        """
+        return self.permissions & perm == perm
+
+    def add_permission(self, perm):
+        """
+        为角色添加权限
+        :param perm:
+        :return:
+        """
+        if not self.has_permission(perm):
+            self.permissions += perm
+
+    def remove_permission(self, perm):
+        """
+        取消角色的权限
+        :param perm:
+        :return:
+        """
+        if self.has_permission(perm):
+            self.permissions -= perm
+
+    def reset_permissions(self):
+        self.permissions = 0
+
     @staticmethod
     def insert_roles():
         # 定义角色User，Moderator，Administrator，匿名角色不需要在数据库中表示出来，该角色的含义就是不在数据库中的用户
         roles = {
-            'User': (Permission.FOLLOW | Permission.COMMENT | Permission.WRITE_ARTICLES, True),
-            'Moderator': (Permission.FOLLOW | Permission.COMMENT | Permission.WRITE_ARTICLES
-                          | Permission.MODERATE_COMMENTS, False),
-            'Administrator': (0xff, False)
+            'User': [Permission.FOLLOW | Permission.COMMENT | Permission.WRITE],
+            'Moderator': [Permission.FOLLOW | Permission.COMMENT | Permission.WRITE | Permission.MODERATE],
+            'Administrator': [Permission.FOLLOW | Permission.COMMENT | Permission.WRITE
+                              | Permission.MODERATE | Permission.ADMIN],
         }
+        default_role = 'User'
         """
         通过角色名查找现有的角色，然后再进行更新。只有当数据库中没有某个角色时才会创建新角色对象。
         """
@@ -184,21 +229,15 @@ class Role(db.Model):
             role = Role.query.filter_by(role_name=r).first()
             if role is None:
                 role = Role(role_name=r)
-            role.permissions = roles[r][0]
-            role.default = roles[r][1]
+            role.reset_permissions()
+            for perm in roles[r]:
+                role.add_permission(perm)
+            role.default = (role.role_name == default_role)
             db.session.add(role)
         db.session.commit()
 
     def __repr__(self):
         return '<Role %r>' % self.role_name
-
-
-class Permission:
-    FOLLOW = 0X01
-    COMMENT = 0X02
-    WRITE_ARTICLES = 0X04
-    MODERATE_COMMENTS = 0X08
-    ADMINISTER = 0x80
 
 
 class AnonymousUser(AnonymousUserMixin):
