@@ -13,6 +13,11 @@ from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
 import unittest
 
+import sys
+
+charset = os.environ.get('CHARSET') or 'utf-8'
+reload(sys)
+sys.setdefaultencoding(charset)
 
 app = create_app(os.environ.get('FLASK_CONFIG') or 'default')
 manager = Manager(app)

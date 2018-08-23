@@ -32,8 +32,7 @@ class RegistrationForm(FlaskForm):
     user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
     user_name = StringField('用户名', validators=[DataRequired(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$',
         0, 'User Name must have two letters,numbers dots or underscores')])
-    password = PasswordField('密码', validators=[DataRequired(), EqualTo('password2',
-                                                                             message='Passwords must match.')])
+    password = PasswordField('密码', validators=[DataRequired(), EqualTo('password2', message='Passwords must match.')])
     password2 = PasswordField('确认密码', validators=[DataRequired()])
     submit = SubmitField('注册')
 
