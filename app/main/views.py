@@ -7,10 +7,15 @@ from flask import session
 from flask import redirect
 from flask import url_for
 from flask import abort
+from flask import flash
+from flask_login import login_required
+from flask_login import current_user
 
 from . import main
+from .. import db
 from ..models import User
 from .forms import NameForm
+from .forms import EditProfileForm
 
 
 # 路由修饰器由蓝本提供
@@ -36,3 +41,27 @@ def user(user_name):
     if user is None:
         abort(404)
     return render_template('user.html', user=user)
+
+
+@main.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    """
+    显示时，应该从数据库中查询出已有内容，显示在页面，等待用户修改。
+    :return:
+    """
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        current_user.user_real_name = form.user_real_name.data
+        current_user.user_location = form.user_location.data
+        current_user.user_description = form.user_description.data
+        db.session.add(current_user)
+        db.session.commit()
+        flash('你的资料已经更新。')
+        return redirect(url_for('main.user', user_name=current_user.user_name))
+    form.user_real_name.data = current_user.user_real_name
+    form.user_location = current_user.user_location
+    form.user_description = current_user.user_description
+    return render_template('edit_profile.html', form=form)
+
+

@@ -13,7 +13,7 @@ from . import login_manager
 
 import sys
 import os
-import datetime
+from datetime import datetime
 
 charset = os.environ.get('CHARSET') or 'utf-8'
 reload(sys)

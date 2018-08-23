@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+
 {% block page_content %}
 <div class="page-header">
     <h1>{{ user.user_name }}</h1>
@@ -17,7 +19,13 @@
     {% endif %}
     <p>
         首次注册时间： {{ moment(user.register_date).format('L') }}。
+        <br>
         最后一次访问：{{ moment(user.last_access_date).fromNow() }}。
+    </p>
+    <p>
+        {% if user == current_user %}
+            <a class="btn btn-default" href="{{ url_for('main.edit_profile') }}">编辑资料</a>
+        {% endif %}
     </p>
 </div>
 {% endblock %}
