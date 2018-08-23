@@ -1,0 +1,23 @@
+{% block page_content %}
+<div class="page-header">
+    <h1>{{ user.user_name }}</h1>
+    {% if user.user_real_name or user.user_location %}
+        <p>
+            {% if user.user_real_name %}{{ user_user_real_name }}{% endif %}
+            {% if user.user_location %}
+                From <a href="http://maps.google.com/?q={{ user.user_location }}">{{ user.user_location }}</a>
+            {% endif %}
+        </p>
+    {% endif %}
+    {% if current_user.is_administrator %}
+        <p><a href="mailto:{{ user.user_email }}">{{ user.user_email }}</a></p>
+    {% endif %}
+    {% if user.user_description %}
+        <p>{{ user.user_description }}</p>
+    {% endif %}
+    <p>
+        首次注册时间： {{ moment(user.register_date).format('L') }}。
+        最后一次访问：{{ moment(user.last_access_date).fromNow() }}。
+    </p>
+</div>
+{% endblock %}

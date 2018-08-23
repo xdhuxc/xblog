@@ -3,6 +3,10 @@
 
 import unittest
 
+
 class PermissionTestCase(unittest.TestCase):
+
+    def __init__(self):
+        pass
 
 

@@ -40,7 +40,7 @@ def test():
     :return:
     """
     # tests 为要测试的模块名或测试用例目录
-    tests = unittest.TestLoader().discover('tests')
+    tests = unittest.TestLoader().discover('tests', pattern='*role*.py')
     unittest.TextTestRunner(verbosity=2).run(tests)
 
 

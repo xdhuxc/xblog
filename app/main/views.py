@@ -6,8 +6,10 @@ from flask import render_template
 from flask import session
 from flask import redirect
 from flask import url_for
+from flask import abort
 
 from . import main
+from ..models import User
 from .forms import NameForm
 
 
@@ -23,7 +25,14 @@ def index():
         这意味着同一蓝本中的重定向可以使用简写形式，但是跨蓝本的重定向必须使用带有命名空间的端点名。
         
         """
-
         return redirect(url_for('.index'))
     return render_template('index.html', form=form, name=session.get('name'), known=session.get('known', False),
                            current_time=datetime.utcnow())
+
+
+@main.route('/user/<user_name>')
+def user(user_name):
+    user = User.query.filter_by(user_name=user_name).first()
+    if user is None:
+        abort(404)
+    return render_template('user.html', user=user)

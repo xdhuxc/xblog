@@ -109,11 +109,10 @@ def before_request():
     如果请求满足以上3个条件，则会被重定向到/auth/unconfirmed路由，显示一个确认账户相关信息的页面。
     :return:
     """
-    if current_user.is_authenticated \
-            and not current_user.confirmed \
-            and request.endpoint[:5] != 'auth.' \
-            and request.endpoint != 'static':
-        return redirect(url_for('auth.unconfirmed'))
+    if current_user.is_authenticated:
+        current_user.ping()
+        if not current_user.confirmed and request.endpoint[:5] != 'auth.':
+            return redirect(url_for('auth.unconfirmed'))
 
 
 @auth.route('/confirm')
@@ -215,8 +214,6 @@ def change_email(token):
         flash('请求错误。')
     logout()
     return redirect(url_for('main.index'))
-
-
 
 """
 @app.route('/secret')

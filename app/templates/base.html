@@ -32,6 +32,11 @@ Flask
                 <li>
                     <a href="{{ url_for('main.index') }}">首页</a>
                 </li>
+                {% if current_user.is_authenticated %}
+                <li>
+                    <a href="{{ url_for('main.user', user_name=current_user.user_name) }}">我的资料</a>
+                </li>
+                {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 {% if current_user.is_authenticated %}

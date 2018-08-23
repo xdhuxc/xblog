@@ -13,6 +13,7 @@ from . import login_manager
 
 import sys
 import os
+import datetime
 
 charset = os.environ.get('CHARSET') or 'utf-8'
 reload(sys)
@@ -31,11 +32,15 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_name = db.Column(db.String(50), unique=True, index=True)
-    user_email = db.Column(db.String(64), unique=True, index=True)
+    user_real_name = db.Column(db.String(64), comment='用户真实姓名')
+    user_location = db.Column(db.String(120), comment='用户所在地')
+    user_description = db.Column(db.Text(), comment='用户的自我介绍')
+    register_date = db.Column(db.DateTime(), default=datetime.utcnow, comment='注册日期')
+    last_access_date = db.Column(db.DateTime(), default=datetime.utcnow, comment='最后访问日期')
+    user_email = db.Column(db.String(64), unique=True, index=True, comment='用户邮箱')
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
-    # 是否已经确认该账户可使用邮箱联系
-    confirmed = db.Column(db.Boolean, default=False)
+    confirmed = db.Column(db.Boolean, default=False, comment='是否已确认该邮箱')
 
     def __init__(self, **kwargs):
         # 调用基类的构造函数
@@ -46,6 +51,14 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(role_name='Administrator').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+
+    def ping(self):
+        """
+        每次收到用户的请求时都要调用ping()方法
+        :return:
+        """
+        self.last_access_date = datetime.utcnow()
+        db.session.add(self)
 
     def get_id(self):
         """
