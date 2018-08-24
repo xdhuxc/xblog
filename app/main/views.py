@@ -14,8 +14,11 @@ from flask_login import current_user
 from . import main
 from .. import db
 from ..models import User
+from ..models import Role
 from .forms import NameForm
 from .forms import EditProfileForm
+from .forms import EditProfileAdminForm
+from ..decorators import admin_required
 
 
 # 路由修饰器由蓝本提供
@@ -59,9 +62,41 @@ def edit_profile():
         db.session.commit()
         flash('你的资料已经更新。')
         return redirect(url_for('main.user', user_name=current_user.user_name))
-    form.user_real_name.data = current_user.user_real_name
-    form.user_location = current_user.user_location
-    form.user_description = current_user.user_description
+    user = User.query.filter_by(user_name=current_user.user_name).first()
+    form.user_real_name.data = user.user_real_name
+    form.user_location.data = user.user_location
+    form.user_description.data = user.user_description
     return render_template('edit_profile.html', form=form)
 
 
+@main.route('/edit_profile/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_profile_admin(id):
+    """
+    管理员的资料编辑路由
+    :param id:
+    :return:
+    """
+    user = User.query.get_or_404(id)
+    form = EditProfileAdminForm
+    if form.validate_on_submit():
+        user.user_name = form.user_name.data
+        user.user_email = form.user_email.data
+        user.confirmed = form.confirmed.data
+        user.user_role = Role.query.get(form.user_role.data)
+        user.user_real_name = form.user_real_name.data
+        user.user_location = form.user_location.data
+        user.user_description = form.user_description.data
+        db.session.add(user)
+        db.session.commit()
+        flash('用户信息已经更新。')
+        return redirect(url_for('main.user', user_name=user.user_name))
+    form.user_email.data = user.user_email
+    form.user_name.data = user.user_name
+    form.confirmed.data = user.confirmed
+    form.user_role.data = user.role_id
+    form.user_real_name.data = user.user_real_name
+    form.user_location.data = user.user_location
+    form.user_description.data = user.user_description
+    return render_template('edit_profile.html', form=form, user=user)

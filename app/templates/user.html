@@ -18,9 +18,7 @@
         <p>{{ user.user_description }}</p>
     {% endif %}
     <p>
-        首次注册时间： {{ moment(user.register_date).format('L') }}。
-        <br>
-        最后一次访问：{{ moment(user.last_access_date).fromNow() }}。
+        首次注册时间： {{ moment(user.register_date).format('L') }}，最后一次访问：{{ moment(user.last_access_date).fromNow() }}。
     </p>
     <p>
         {% if user == current_user %}
