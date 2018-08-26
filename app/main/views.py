@@ -70,12 +70,13 @@ def index():
 
 @main.route('/user/<user_name>')
 def user(user_name):
-    user = User.query.filter_by(user_name=user_name).first()
-    if user is None:
-        abort(404)
-    # User.posts 返回的是查询对象，因此可在其上调用过滤器
-    posts = user.posts.order_by(Post.post_timestamp.desc()).all()
-    return render_template('user.html', user=user, posts=posts)
+    user = User.query.filter_by(user_name=user_name).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    print(user.posts)
+    pagination = user.posts.order_by(Post.post_timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
+    posts = pagination.items
+    return render_template('user.html', user=user, posts=posts, pagination=pagination)
 
 
 @main.route('/edit_profile', methods=['GET', 'POST'])
@@ -132,3 +133,34 @@ def edit_profile_admin(user_id):
     form.user_location.data = user.user_location
     form.user_description.data = user.user_description
     return render_template('edit_profile.html', form=form, user=user)
+
+
+@main.route('/post/<int:post_id>')
+def get_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    # 这里必须要传入列表，因为只有这样，index.html和user.html引用的_posts.html模板才能在这个页面中使用
+    return render_template('post.html', posts=[post])
+
+
+@main.route('/edit/<int:post_id>', methods=['GET', 'POST'])
+@login_required
+def edit_post(post_id):
+    """
+    编辑博客文章的路由
+    :param post_id:
+    :return:
+    """
+    post = Post.query.get_or_404(post_id)
+    if current_user != post.author and not current_user.can(Permission.WRITE):
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.post_title = form.post_title.data
+        post.post_body = form.post_body.data
+        db.session.add(post)
+        db.session.commit()
+        flash('此博客文章已经更新。')
+        return redirect(url_for('main.get_post', post_id=post.post_id))
+    form.post_title.data = post.post_title
+    form.post_body.data = post.post_body
+    return render_template('edit_post.html', form=form)

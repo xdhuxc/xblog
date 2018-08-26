@@ -12,6 +12,7 @@ from wtforms.validators import DataRequired
 from wtforms.validators import Length
 from wtforms.validators import Email
 from wtforms.validators import Regexp
+from flask_pagedown.fields import PageDownField
 
 from ..models import Role
 from ..models import User
@@ -68,5 +69,5 @@ class EditProfileAdminForm(FlaskForm):
 class PostForm(FlaskForm):
     post_title = StringField('标题',
                              validators=[DataRequired(), Length(5, 120, message='标题必须填写并且须多于10个字符。')])
-    post_body = TextAreaField('正文', validators=[DataRequired()])
+    post_body = PageDownField('正文', validators=[DataRequired()])
     submit = SubmitField('提交')

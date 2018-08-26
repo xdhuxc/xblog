@@ -8,7 +8,28 @@
                 <div class="post-title">{{ post.post_title }}</div>
                 <div class="post-date">{{ moment(post.post_timestamp).fromNow() }}</div>
                 <div class="post-author"><a href="">{{ post.author.user_name }}</a></div>
-                <div class="post-body">{{ post.post_body }}</div>
+                <!-- 渲染HTML格式内容时使用 | safe 后缀，其目的是告诉Jinja2不要转义HTML元素 -->
+                <div class="post-body">
+                    {% if post.post_body_html %}
+                        {{ post.post_body_html | safe }}
+                    {% else %}
+                        {{ post.post_body }}
+                    {% endif %}
+                </div>
+                <div class="post-footer">
+                    {% if current_user == post.author %}
+                        <a href="{{ url_for('main.edit_post', post_id=post.post_id) }}">
+                            <span class="label label-primary">编辑</span>
+                        </a>
+                    {% elif current_user.is_administrator %}
+                        <a href="{{ url_for('main.edit_post', post_id=post.post_id) }}">
+                            <span class="label label-danger">编辑【管理员】</span>
+                        </a>
+                    {% endif %}
+                     <a href="{{ url_for('main.get_post', post_id=post.post_id) }}">
+                        <span class="label label-default">永久链接</span>
+                    </a>
+                </div>
             </div>
         </li>
     {% endfor %}

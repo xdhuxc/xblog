@@ -6,11 +6,8 @@ import os
 from datetime import datetime
 import hashlib
 
-from sqlalchemy.exc import IntegrityError
-from random import seed
-from random import randint
-import forgery_py
-
+from markdown import markdown
+import bleach
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from flask_login import UserMixin
@@ -48,7 +45,7 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
     confirmed = db.Column(db.Boolean, default=False, comment='是否已确认该邮箱')
     gravatar_hash = db.Column(db.String(32), comment='电子邮件地址的MD5散列值')
-    posts = db.relationship('Post', backref='author', lazy='select')
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
 
     def __init__(self, **kwargs):
         # 调用基类的构造函数
@@ -185,35 +182,13 @@ class User(UserMixin, db.Model):
         return '{url}/{generated_hash}?s={size}&d={default}&r={rating}'.format(
             url=url, generated_hash=generated_hash, size=size, default=default, rating=rating)
 
-    @staticmethod
-    def generate_fake(count=100):
-        """
-        生成虚拟用户
-        :param count:
-        :return:
-        """
-        seed()
-        for i in range(count):
-            u = User(user_email=forgery_py.internet.email_address(),
-                     user_name=forgery_py.internet.user_name(True),
-                     password=forgery_py.lorem_ipsum.word(),
-                     confirmed=True,
-                     user_real_name=forgery_py.name.full_name(),
-                     user_location=forgery_py.address.city(),
-                     user_description=forgery_py.lorem_ipsum.sentence(),
-                     last_access_date=forgery_py.date.date(True))
-            db.session.add(u)
-            try:
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
-
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
     %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
     """
     def __repr__(self):
-        return '<User %r>' % self.user_name
+        return '%r' % {'User': (self.user_id, self.user_name, self.user_email, self.user_real_name,
+                                self.user_location, self.user_description, self.confirmed)}
 
 
 # Flask-Login要求程序实现一个回调函数，使用指定的标识符加载用户
@@ -295,7 +270,7 @@ class Role(db.Model):
         db.session.commit()
 
     def __repr__(self):
-        return '<Role %r>' % self.role_name
+        return '%r' % {'Role': (self.role_id, self.role_name, self.default, self.permissions, self.users)}
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -316,27 +291,25 @@ class Post(db.Model):
     post_body = db.Column(db.Text, comment='博客正文')
     post_timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True, comment='博客撰写时间')
     author_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), comment='博客作者')
+    post_body_html = db.Column(db.Text, comment='博客文章的HTML代码')
 
     @staticmethod
-    def generate_fake(count=100):
-        """
-        生成虚拟博客文章
-        :param count:
-        :return:
-        """
-        seed()
-        user_count = User.query.count()
-        for i in range(count):
-            u = User.query.offset(randint(0, user_count - 1)).first()
-            p = Post(post_title=(unicode(i) + forgery_py.lorem_ipsum.sentence()),
-                     post_body=forgery_py.lorem_ipsum.sentence(),
-                     post_timestamp=forgery_py.date.date(True),
-                     author=u)
-            db.session.add(p)
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
+    def on_changed_body(target, value, old_value, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquota', 'code',
+                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                        'h1', 'h2', 'h3', 'p']
+        target.post_body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags,
+            strip=True))
 
     def __repr__(self):
-        return '<Post %r>' % self.author_id
+        return '%r' % {'Post': (self.post_id, self.post_title, self.post_body, self.post_timestamp,
+                       self.author, self.post_body_html)}
+
+
+"""
+on_changed_body()函数注册在post_body字段上，是SQLAlchemy “set”事件的监听程序，这意味着
+只要这个类实例的post_body字段设置了新值，函数就会自动被调用。
+"""
+db.event.listen(Post.post_body, 'set', Post.on_changed_body)
