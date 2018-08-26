@@ -1,0 +1,15 @@
+<ul class="posts">
+    {% for post in posts %}
+        <li class="post">
+            <div class="post-thumbnail">
+
+            </div>
+            <div class="post-content">
+                <div class="post-title">{{ post.post_title }}</div>
+                <div class="post-date">{{ moment(post.post_timestamp).fromNow() }}</div>
+                <div class="post-author"><a href="">{{ post.author.user_name }}</a></div>
+                <div class="post-body">{{ post.post_body }}</div>
+            </div>
+        </li>
+    {% endfor %}
+</ul>

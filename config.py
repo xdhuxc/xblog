@@ -8,7 +8,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 os.environ['DEV_DATABASE_URL'] = 'mysql://root:19940423@localhost/xblog'
 os.environ['CHARSET'] = 'utf-8'
-os.environ['FLASKY_ADMIN'] = 'xdhuxc@163.com'
+os.environ['FLASKY_ADMIN'] = 'wanghuanand@sohu.com'
+
 
 """
 wanghuanand@sohu.com
@@ -25,6 +26,7 @@ class Config:
     # 将其设为True时，每次请求结束后都会自动提交数据库中的变动。
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
+    FLASKY_POSTS_PER_PAGE = os.environ.get('FLASKY_POSTS_PER_PAGE') or 10
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN') or 'wanghuanand@sohu.com'
 

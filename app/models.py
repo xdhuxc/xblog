@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+import os
+from datetime import datetime
+import hashlib
+
+from sqlalchemy.exc import IntegrityError
+from random import seed
+from random import randint
+import forgery_py
 
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
@@ -8,12 +17,9 @@ from flask_login import UserMixin
 from flask_login import AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
+from flask import request
 from . import db
 from . import login_manager
-
-import sys
-import os
-from datetime import datetime
 
 charset = os.environ.get('CHARSET') or 'utf-8'
 reload(sys)
@@ -41,6 +47,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
     confirmed = db.Column(db.Boolean, default=False, comment='是否已确认该邮箱')
+    gravatar_hash = db.Column(db.String(32), comment='电子邮件地址的MD5散列值')
+    posts = db.relationship('Post', backref='author', lazy='select')
 
     def __init__(self, **kwargs):
         # 调用基类的构造函数
@@ -51,6 +59,9 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(role_name='Administrator').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+        # 添加用户的电子邮件地址MD5散列值，用于生成用户图像。
+        if self.user_email is not None and self.gravatar_hash is None:
+            self.gravatar_hash = hashlib.md5(self.user_email.encode(charset)).hexdigest()
 
     def ping(self):
         """
@@ -59,6 +70,7 @@ class User(UserMixin, db.Model):
         """
         self.last_access_date = datetime.utcnow()
         db.session.add(self)
+        db.session.commit()
 
     def get_id(self):
         """
@@ -154,6 +166,7 @@ class User(UserMixin, db.Model):
         if self.query.filter_by(user_email=new_email).first() is not None:
             return False
         self.user_email = new_email
+        self.gravatar_hash = hashlib.md5(self.user_email.encode(charset)).hexdigest()
         db.session.add(self)
         return True
 
@@ -162,6 +175,38 @@ class User(UserMixin, db.Model):
 
     def is_administrator(self):
         return self.can(Permission.ADMIN)
+
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        if request.is_secure:
+            url = 'https://secure.gravatar.com/avatar'
+        else:
+            url = 'http://www.gravatar.com/avatar'
+        generated_hash = self.gravatar_hash or hashlib.md5(self.user_email.encode(charset)).hexdigest()
+        return '{url}/{generated_hash}?s={size}&d={default}&r={rating}'.format(
+            url=url, generated_hash=generated_hash, size=size, default=default, rating=rating)
+
+    @staticmethod
+    def generate_fake(count=100):
+        """
+        生成虚拟用户
+        :param count:
+        :return:
+        """
+        seed()
+        for i in range(count):
+            u = User(user_email=forgery_py.internet.email_address(),
+                     user_name=forgery_py.internet.user_name(True),
+                     password=forgery_py.lorem_ipsum.word(),
+                     confirmed=True,
+                     user_real_name=forgery_py.name.full_name(),
+                     user_location=forgery_py.address.city(),
+                     user_description=forgery_py.lorem_ipsum.sentence(),
+                     last_access_date=forgery_py.date.date(True))
+            db.session.add(u)
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
 
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
@@ -262,3 +307,36 @@ class AnonymousUser(AnonymousUserMixin):
 
 
 login_manager.anonymous_user = AnonymousUser
+
+
+class Post(db.Model):
+    __tablename__ = 'posts'
+    post_id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment='博客ID')
+    post_title = db.Column(db.String(120), unique=True, index=True, comment='博客标题')
+    post_body = db.Column(db.Text, comment='博客正文')
+    post_timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True, comment='博客撰写时间')
+    author_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), comment='博客作者')
+
+    @staticmethod
+    def generate_fake(count=100):
+        """
+        生成虚拟博客文章
+        :param count:
+        :return:
+        """
+        seed()
+        user_count = User.query.count()
+        for i in range(count):
+            u = User.query.offset(randint(0, user_count - 1)).first()
+            p = Post(post_title=(unicode(i) + forgery_py.lorem_ipsum.sentence()),
+                     post_body=forgery_py.lorem_ipsum.sentence(),
+                     post_timestamp=forgery_py.date.date(True),
+                     author=u)
+            db.session.add(p)
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+
+    def __repr__(self):
+        return '<Post %r>' % self.author_id

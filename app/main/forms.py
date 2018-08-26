@@ -35,9 +35,9 @@ class EditProfileForm(FlaskForm):
 
 class EditProfileAdminForm(FlaskForm):
     user_email = StringField('电子邮件', validators=[DataRequired(), Length(1, 64), Email()])
-    user_name = StringField('用户名', validators=[DataRequired(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
-        '用户名必须以字母开头，且包含字母、数字、‘.’或者下划线。')])
-    confirmed = BooleanField('是否确认')
+    user_name = StringField('用户名', validators=[DataRequired(), Length(1, 64), Regexp(
+        '^[A-Za-z][A-Za-z0-9_.]*$', 0, '用户名必须以字母开头，且包含字母、数字、‘.’或者下划线。')])
+    confirmed = BooleanField('是否已认证')
     # 使用coerce=int参数，其作用是保证这个字段的data属性值是整数
     user_role = SelectField('角色', coerce=int)
     user_real_name = StringField('真实姓名', validators=[Length(0, 64)])
@@ -63,3 +63,10 @@ class EditProfileAdminForm(FlaskForm):
     def validate_user_name(self, field):
         if field.data != self.user.user_name and User.query.filter_by(user_name=field.data).first():
             raise ValidationError('该用户名已经被使用。')
+
+
+class PostForm(FlaskForm):
+    post_title = StringField('标题',
+                             validators=[DataRequired(), Length(5, 120, message='标题必须填写并且须多于10个字符。')])
+    post_body = TextAreaField('正文', validators=[DataRequired()])
+    submit = SubmitField('提交')
