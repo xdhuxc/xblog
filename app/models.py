@@ -24,11 +24,22 @@ sys.setdefaultencoding(charset)
 
 
 class Permission:
+
+    def __init__(self):
+        pass
+
     FOLLOW = 1
     COMMENT = 2
     WRITE = 4
     MODERATE = 8
     ADMIN = 16
+
+
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True, comment='关注者')
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True, comment='被关注者')
+    follow_timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment='关注时间')
 
 
 class User(UserMixin, db.Model):
@@ -45,6 +56,22 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
     confirmed = db.Column(db.Boolean, default=False, comment='是否已确认该邮箱')
     gravatar_hash = db.Column(db.String(32), comment='电子邮件地址的MD5散列值')
+    """
+    为了消除外键间的歧义，定义关系时必须使用可选参数foreign_keys指定外键。
+    """
+    followed = db.relationship('Follow',
+                               foreign_keys=[Follow.follower_id],
+                               backref=db.backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.follower_id],
+                                backref=db.backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
+
+
+
     """
     lazy属性设置为dynamic，关系属性不会直接返回记录，而是返回查询对象，所以在执行查询之前还可以添加额外的过滤器。
     """
