@@ -45,6 +45,9 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'))
     confirmed = db.Column(db.Boolean, default=False, comment='是否已确认该邮箱')
     gravatar_hash = db.Column(db.String(32), comment='电子邮件地址的MD5散列值')
+    """
+    lazy属性设置为dynamic，关系属性不会直接返回记录，而是返回查询对象，所以在执行查询之前还可以添加额外的过滤器。
+    """
     posts = db.relationship('Post', backref='author', lazy='dynamic')
 
     def __init__(self, **kwargs):
