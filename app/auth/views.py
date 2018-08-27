@@ -73,7 +73,7 @@ def register():
         db.session.commit()
         token = user.generate_confirmation_token()
         send_email(user.user_email, 'Confirm Your Account', 'auth/email/confirm', user=user, token=token)
-        flash('A confirmation email has been sent to you by email.')
+        flash('确认邮件已经发送至你的邮箱 %s。' % form.user_email.data)
         return redirect(url_for('main.index'))
     return render_template('auth/register.html', form=form)
 
@@ -120,7 +120,7 @@ def before_request():
 def resend_confirmation():
     token = current_user.generate_confirmation_token()
     send_email(current_user.user_email, 'Confirm Your Account', 'auth/email/confirm', user=current_user, token=token)
-    flash('A new confirmation email has been sent to you by email.')
+    flash('确认邮件已经发送至你的邮箱 %s。' % current_user.user_email)
     return redirect(url_for('main.index'))
 
 

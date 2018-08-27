@@ -41,6 +41,9 @@ class Follow(db.Model):
     followed_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True, comment='被关注者')
     follow_timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment='关注时间')
 
+    def __repr__(self):
+        return '%r' % {'Follow': (self.follower_id, self.followed_id, self.follow_timestamp)}
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -67,7 +70,7 @@ class User(UserMixin, db.Model):
                                lazy='dynamic',
                                cascade='all, delete-orphan')
     followers = db.relationship('Follow',
-                                foreign_keys=[Follow.follower_id],
+                                foreign_keys=[Follow.followed_id],
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
@@ -219,7 +222,9 @@ class User(UserMixin, db.Model):
         """
         if not self.is_following(user):
             f = Follow(follower=self, followed=user)
+            print(f)
             db.session.add(f)
+            db.session.commit()
 
     def unfollow(self, user):
         """
@@ -230,6 +235,7 @@ class User(UserMixin, db.Model):
         f = self.followed.filter_by(followed_id=user.user_id).first()
         if f:
             db.session.delete(f)
+            db.session.commit()
 
     def is_following(self, user):
         """

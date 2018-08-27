@@ -23,6 +23,7 @@ from .forms import PostForm
 from .forms import EditProfileForm
 from .forms import EditProfileAdminForm
 from ..decorators import admin_required
+from ..decorators import permission_required
 
 """
 在蓝本中，Flask会为蓝本中的全部端点加上一个命名空间，这样就可以在不同的蓝本中使用相同的端点名定义视图函数，而不会产生冲突。
@@ -70,6 +71,7 @@ def index():
 
 @main.route('/user/<user_name>')
 def user(user_name):
+    print("user_name:" + user_name)
     user = User.query.filter_by(user_name=user_name).first_or_404()
     page = request.args.get('page', 1, type=int)
     print(user.posts)
@@ -164,3 +166,72 @@ def edit_post(post_id):
     form.post_title.data = post.post_title
     form.post_body.data = post.post_body
     return render_template('edit_post.html', form=form)
+
+
+@main.route('/follow/<user_name>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def follow(user_name):
+    """
+    关注用户user_name
+    :param user_name:
+    :return:
+    """
+    user = User.query.filter_by(user_name=user_name).first()
+    if user is None:
+        flash('非法用户。')
+        return redirect(url_for('main.index'))
+    if current_user.is_following(user):
+        flash('你已经关注了该用户。')
+        return redirect(url_for('main.user', user_name=user_name))
+    current_user.follow(user)
+    flash('你现在已经关注了 %s。' % user_name)
+    return redirect(url_for('main.user', user_name=user_name))
+
+
+@main.route('/unfollow/<user_name>')
+@login_required
+def unfollow(user_name):
+    """
+    取消对用户user_name的关注
+    :param user_name:
+    :return:
+    """
+    user = User.query.filter_by(user_name=user_name).first()
+    if user is None:
+        flash('非法用户。')
+        return redirect(url_for('main.index'))
+    if not current_user.is_following(user):
+        flash('你没有关注该用户。')
+        return redirect(url_for('main.user', user_name=user_name))
+    current_user.unfollow(user)
+    flash('你已经取消了对 %s 的关注。' % user_name)
+    return redirect(url_for('main.user', user_name=user_name))
+
+
+@main.route('/followers/<user_name>')
+@login_required
+def followers(user_name):
+    user = User.query.filter_by(user_name=user_name).first()
+    if user is None:
+        flash('非法用户。')
+        return redirect(url_for('main.index'))
+    page = request.args.get('page', 1, type=int)
+    pagination = user.followers.paginate(page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
+    follows = [{'user': item.follower, 'follow_timestamp': item.follow_timestamp} for item in pagination.items]
+    return render_template('followers.html', user=user, title='关注者列表',
+                           endpoint='main.followers', pagination=pagination, follows=follows)
+
+
+@main.route('/followed_by/<user_name>')
+def followed_by(user_name):
+    user = User.query.filter_by(user_name=user_name).first()
+    if user is None:
+        flash('非法用户。')
+        return redirect(url_for('main.index'))
+    page = request.args.get('page', 1, type=int)
+    pagination = user.followed.paginate(page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'],
+                                        error_out=False)
+    follows = [{'user': item.followed, 'follow_timestamp': item.follow_timestamp} for item in pagination.items]
+    return render_template('followers.html', user=user, title='我的粉丝',
+                           endpoint='main.followed_by', pagination=pagination, follows=follows)

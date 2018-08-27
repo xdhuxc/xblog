@@ -23,6 +23,22 @@
         <p>
             首次注册时间： {{ moment(user.register_date).format('L') }}，最后一次访问：{{ moment(user.last_access_date).fromNow() }}。
         </p>
+        <p> {{ user.posts.count() }} 篇博客文章</p>
+
+        <p>
+            {% if current_user.can(Permission.FOLLOW) and user != current_user %}
+                {% if not current_user.is_following(user) %}
+                    <a href="{{ url_for('main.follow', user_name=user.user_name) }}" class="btn btn-primary">关注</a>
+                {% else %}
+                    <a href="{{ url_for('main.unfollow') }}" class="btn btn-primary">取消关注</a>
+                {% endif %}
+            {% endif %}
+            <a href="{{ url_for('main.followers', user_name=user.user_name) }}">我关注的：<span class="badge">{{ user.followers.count() }}</span></a>
+            <a href="{{ url_for('main.followed_by', user_name=user.user_name) }}">关注我的：<span class="badge">{{ user.followed.count() }}</span></a>
+            {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
+            | <span class="label label-default">关注你</span>
+            {% endif %}
+        </p>
         <p>
             {% if user == current_user %}
                 <a class="btn btn-default" href="{{ url_for('main.edit_profile') }}">编辑资料</a>
