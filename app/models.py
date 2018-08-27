@@ -58,6 +58,8 @@ class User(UserMixin, db.Model):
     gravatar_hash = db.Column(db.String(32), comment='电子邮件地址的MD5散列值')
     """
     为了消除外键间的歧义，定义关系时必须使用可选参数foreign_keys指定外键。
+    lazy参数指定为joined，该模式可以实现立即从连接查询中加载相关对象。
+    cascade参数配置在父对象上执行的操作对相关对象的影响
     """
     followed = db.relationship('Follow',
                                foreign_keys=[Follow.follower_id],
@@ -69,9 +71,6 @@ class User(UserMixin, db.Model):
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
-
-
-
     """
     lazy属性设置为dynamic，关系属性不会直接返回记录，而是返回查询对象，所以在执行查询之前还可以添加额外的过滤器。
     """
@@ -211,6 +210,42 @@ class User(UserMixin, db.Model):
         generated_hash = self.gravatar_hash or hashlib.md5(self.user_email.encode(charset)).hexdigest()
         return '{url}/{generated_hash}?s={size}&d={default}&r={rating}'.format(
             url=url, generated_hash=generated_hash, size=size, default=default, rating=rating)
+
+    def follow(self, user):
+        """
+        设置当前对象关注user对象
+        :param user:
+        :return:
+        """
+        if not self.is_following(user):
+            f = Follow(follower=self, followed=user)
+            db.session.add(f)
+
+    def unfollow(self, user):
+        """
+        取消当前对象对user对象的关注
+        :param user:
+        :return:
+        """
+        f = self.followed.filter_by(followed_id=user.user_id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_following(self, user):
+        """
+        当前对象是否关注user对象
+        :param user:
+        :return:
+        """
+        return self.followed.filter_by(followed_id=user.user_id).first() is not None
+
+    def is_followed_by(self, user):
+        """
+        当前对象是否被user对象关注
+        :param user:
+        :return:
+        """
+        return self.followers.filter_by(follower_id=user.user_id).first() is not None
 
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
