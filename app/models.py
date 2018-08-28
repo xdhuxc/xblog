@@ -78,6 +78,8 @@ class User(UserMixin, db.Model):
     lazy属性设置为dynamic，关系属性不会直接返回记录，而是返回查询对象，所以在执行查询之前还可以添加额外的过滤器。
     """
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    # users表和comments表的一对多关系
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
     def __init__(self, **kwargs):
         # 调用基类的构造函数
@@ -91,6 +93,8 @@ class User(UserMixin, db.Model):
         # 添加用户的电子邮件地址MD5散列值，用于生成用户图像。
         if self.user_email is not None and self.gravatar_hash is None:
             self.gravatar_hash = hashlib.md5(self.user_email.encode(charset)).hexdigest()
+        # 创建用户对象时设置自己关注自己
+        self.follow(self)
 
     def ping(self):
         """
@@ -270,6 +274,18 @@ class User(UserMixin, db.Model):
         """
         return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(Follow.follower_id == self.user_id)
 
+    @staticmethod
+    def add_self_follows():
+        """
+        在数据库中已经有大量未关注自己的用户时，通过该方法设置用户关注自己
+        :return:
+        """
+        for user in User.query.all():
+            if not user.is_following(user):
+                user.follow(user)
+                db.session.add(user)
+                db.session.commit()
+
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
     %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
@@ -380,6 +396,8 @@ class Post(db.Model):
     post_timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True, comment='博客撰写时间')
     author_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), comment='博客作者')
     post_body_html = db.Column(db.Text, comment='博客文章的HTML代码')
+    # 建立posts表与comments表的一对多关系
+    comments = db.relationship('Comment', backref='post', lazy='dynamic')
 
     @staticmethod
     def on_changed_body(target, value, old_value, initiator):
@@ -395,9 +413,31 @@ class Post(db.Model):
         return '%r' % {'Post': (self.post_id, self.post_title, self.post_body, self.post_timestamp,
                        self.author, self.post_body_html)}
 
-
 """
 on_changed_body()函数注册在post_body字段上，是SQLAlchemy “set”事件的监听程序，这意味着
 只要这个类实例的post_body字段设置了新值，函数就会自动被调用。
 """
 db.event.listen(Post.post_body, 'set', Post.on_changed_body)
+
+
+class Comment(db.Model):
+    """
+    用户评论类
+    """
+    __tablename__ = 'comments'
+    comment_id = db.Column(db.Integer, primary_key=True, comment='评论ID')
+    comment_body = db.Column(db.Text, comment='评论原始内容')
+    comment_body_html = db.Column(db.Text, comment='用户评论的HTML代码')
+    comment_timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow, comment='评论的时间戳')
+    disabled = db.Column(db.Boolean, comment='查禁不当评论')
+    author_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), comment='评论者ID')
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.post_id'), comment='评论的博客ID')
+
+    @staticmethod
+    def on_changed_body(target, value, old_value, initiator):
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'code', 'em', 'i', 'strong']
+        target.comment_body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'), tags=allowed_tags, strip=True))
+
+
+db.event.listen(Comment.comment_body, 'set', Comment.on_changed_body)

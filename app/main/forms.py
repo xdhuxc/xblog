@@ -67,7 +67,18 @@ class EditProfileAdminForm(FlaskForm):
 
 
 class PostForm(FlaskForm):
+    """
+    博客表单
+    """
     post_title = StringField('标题',
                              validators=[DataRequired(), Length(5, 120, message='标题必须填写并且须多于10个字符。')])
     post_body = PageDownField('正文', validators=[DataRequired()])
+    submit = SubmitField('提交')
+
+
+class CommentForm(FlaskForm):
+    """
+    评论表单
+    """
+    comment_body = TextAreaField('评论', validators=[DataRequired()])
     submit = SubmitField('提交')

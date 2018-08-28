@@ -14,6 +14,8 @@ def send_async_email(app, message):
 
 
 def send_email(to, subject, template, **kwargs):
+    print(to)
+    print(app.config['FLASKY_MAIL_SENDER'])
     app = current_app._get_current_object()
     message = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + ' ' + subject,
                       sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])

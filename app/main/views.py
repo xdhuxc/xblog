@@ -19,9 +19,11 @@ from ..models import User
 from ..models import Role
 from ..models import Permission
 from ..models import Post
+from ..models import Comment
 from .forms import PostForm
 from .forms import EditProfileForm
 from .forms import EditProfileAdminForm
+from .forms import CommentForm
 from ..decorators import admin_required
 from ..decorators import permission_required
 
@@ -148,6 +150,18 @@ def edit_profile_admin(user_id):
 @main.route('/post/<int:post_id>')
 def get_post(post_id):
     post = Post.query.get_or_404(post_id)
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(comment_body=form.comment_body.data,
+                          post=post,
+                          author=current_user._get_current_object())
+        db.session.add(comment)
+        db.session.commit()
+        flash('你的评论已经发表。')
+        return redirect(url_for('main.get_post', post_id=post.post_id, page=-1))
+    page = request.args.get('page', 1, type=int)
+    if page == -1:
+        page = (post.comments.count() - 1) / current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
     # 这里必须要传入列表，因为只有这样，index.html和user.html引用的_posts.html模板才能在这个页面中使用
     return render_template('post.html', posts=[post])
 

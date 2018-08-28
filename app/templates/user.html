@@ -33,8 +33,9 @@
                     <a href="{{ url_for('main.unfollow', user_name=user.user_name) }}" class="btn btn-primary">取消关注</a>
                 {% endif %}
             {% endif %}
-            <a href="{{ url_for('main.followers', user_name=user.user_name) }}">关注我的：<span class="badge">{{ user.followers.count() }}</span></a>
-            <a href="{{ url_for('main.followed_by', user_name=user.user_name) }}">我关注的：<span class="badge">{{ user.followed.count() }}</span></a>
+            <!-- 因为有自关注，所以关注者和被关注者数量都减一 -->
+            <a href="{{ url_for('main.followers', user_name=user.user_name) }}">关注我的：<span class="badge">{{ user.followers.count() - 1 }}</span></a>
+            <a href="{{ url_for('main.followed_by', user_name=user.user_name) }}">我关注的：<span class="badge">{{ user.followed.count() - 1 }}</span></a>
             {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
             | <span class="label label-default">关注你</span>
             {% endif %}
