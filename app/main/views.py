@@ -3,7 +3,7 @@
 
 from datetime import datetime
 from flask import render_template
-from flask import session
+from flask import make_response
 from flask import redirect
 from flask import url_for
 from flask import abort
@@ -56,6 +56,14 @@ def index():
     参数type=int保证参数无法转换成整数时，返回默认值。
     """
     page = request.args.get('page', 1, type=int)
+    # 显示所有博客文章或只显示所关注用户的博客文章
+    show_followed = False
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query
     """
     为了显示某页中的记录，要把all()换成Flask-SQLAlchemy提供的paginate()方法。
     页数是paginate()方法的第一个参数，也是唯一必需的参数。
@@ -63,7 +71,7 @@ def index():
     可选参数error_out，当其设为True（默认值）时，如果请求的页数超出了范围，则返回404错误
                     当其设为False时，页数超出范围时会返回一个空列表。
     """
-    pagination = Post.query.order_by(Post.post_timestamp.desc()).paginate(
+    pagination = query.order_by(Post.post_timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
     posts = pagination.items
     return render_template('index.html', form=form, posts=posts, pagination=pagination)
@@ -184,6 +192,8 @@ def follow(user_name):
     if current_user.is_following(user):
         flash('你已经关注了该用户。')
         return redirect(url_for('main.user', user_name=user_name))
+    print('current_user:' + current_user.user_name)
+    print('user:' + user.user_name)
     current_user.follow(user)
     flash('你现在已经关注了 %s。' % user_name)
     return redirect(url_for('main.user', user_name=user_name))
@@ -235,3 +245,23 @@ def followed_by(user_name):
     follows = [{'user': item.followed, 'follow_timestamp': item.follow_timestamp} for item in pagination.items]
     return render_template('followers.html', user=user, title='我的粉丝',
                            endpoint='main.followed_by', pagination=pagination, follows=follows)
+
+
+@main.route('/all')
+@login_required
+def show_all():
+    """
+    设置cookie
+    :return:
+    """
+    resp = make_response(redirect(url_for('main.index')))
+    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+    return resp
+
+
+@main.route('/followed')
+@login_required
+def show_followed():
+    resp = make_response(redirect(url_for('main.index')))
+    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    return resp

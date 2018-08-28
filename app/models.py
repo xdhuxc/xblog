@@ -253,6 +253,23 @@ class User(UserMixin, db.Model):
         """
         return self.followers.filter_by(follower_id=user.user_id).first() is not None
 
+    @property
+    def followed_posts(self):
+        """
+        查询用户所关注的用户的博客文章
+        :return:
+        """
+        """
+        # 查询用户甲(user_name)关注的用户的博客文章
+        最直观的的SQL语句：
+        select * from posts where author_id in (
+            select followed_id from follows where follower_id=(
+                    select user_id from users where user_name='wanghuan'
+            )
+        )
+        """
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(Follow.follower_id == self.user_id)
+
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
     %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
