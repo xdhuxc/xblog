@@ -25,9 +25,9 @@
             {% if moderate %}
                 <br>
                 {% if comment.disabled %}
-                    <a class="btn btn-default btn-xs" href="{{ url_for('main.moderate_enable', comment_id=comment.comment_id, page=page) }}">启用评论</a>
+                    <a class="btn btn-default btn-xs" href="{{ url_for('main.moderate_enable', comment_id=comment.comment_id, page=page) }}">启用</a>
                 {% else %}
-                    <a class="btn btn-danger btn-xs" href="{{ url_for('main.moderate_disable', comment_id=comment.comment_id, page=page) }}">禁用评论</a>
+                    <a class="btn btn-danger btn-xs" href="{{ url_for('main.moderate_disable', comment_id=comment.comment_id, page=page) }}">禁用</a>
                 {% endif %}
             {% endif %}
         </li>
