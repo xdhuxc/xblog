@@ -32,7 +32,7 @@ class RegistrationForm(FlaskForm):
     user_email = StringField('电子邮箱', validators=[DataRequired(), Length(1, 64), Email()])
     user_name = StringField('用户名', validators=[DataRequired(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$',
         0, 'User Name must have two letters,numbers dots or underscores')])
-    password = PasswordField('密码', validators=[DataRequired(), EqualTo('password2', message='Passwords must match.')])
+    password = PasswordField('密码', validators=[DataRequired(), EqualTo('password2', message='两次输入的密码必须一致。')])
     password2 = PasswordField('确认密码', validators=[DataRequired()])
     submit = SubmitField('注册')
 
@@ -43,11 +43,11 @@ class RegistrationForm(FlaskForm):
     """
     def validate_user_email(self, field):
         if User.query.filter_by(user_email=field.data).first():
-            raise ValidationError('Email already registered.')
+            raise ValidationError('该邮件地址已经被注册。')
 
     def validate_user_name(self, field):
         if User.query.filter_by(user_name=field.data).first():
-            raise ValidationError('User Name already in use.')
+            raise ValidationError('该用户名已经被使用。')
 
 
 class ChangePasswordForm(FlaskForm):
@@ -56,7 +56,7 @@ class ChangePasswordForm(FlaskForm):
     """
     old_password = PasswordField('旧密码', validators=[DataRequired()])
     password = PasswordField('新密码', validators=[
-        DataRequired(), EqualTo('password2', message='Passwords must match.')])
+        DataRequired(), EqualTo('password2', message='两次输入的密码必须一致。')])
     password2 = PasswordField('确认新密码', validators=[DataRequired()])
     submit = SubmitField('更改密码')
 

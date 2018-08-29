@@ -278,7 +278,7 @@ def show_all():
     :return:
     """
     resp = make_response(redirect(url_for('main.index')))
-    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+    resp.set_cookie('show_followed', 'False', max_age=24*60*60)
     return resp
 
 
@@ -286,7 +286,7 @@ def show_all():
 @login_required
 def show_followed():
     resp = make_response(redirect(url_for('main.index')))
-    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    resp.set_cookie('show_followed', 'True', max_age=24*60*60)
     return resp
 
 
@@ -299,8 +299,8 @@ def moderate():
     :return:
     """
     page = request.args.get('page', 1, type=int)
-    pagination = Comment.query.order_by(Comment.comment_timestamp.desc()).pagination(
-        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'], error_our=False)
+    pagination = Comment.query.order_by(Comment.comment_timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'], error_out=False)
     comments = pagination.items
     return render_template('moderate.html', comments=comments, pagination=pagination, page=page)
 

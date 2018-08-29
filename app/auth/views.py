@@ -48,7 +48,7 @@ def login():
             如果查询字符串中没有next参数，则重定向到首页。
             """
             return redirect(request.args.get('next') or url_for('main.index'))
-        flash('Invalid username or password.')
+        flash('用户名或密码错误。')
     # 当请求类型是GET时，视图函数直接渲染模板，显示表单。
     return render_template('auth/login.html', form=form)
 
@@ -72,7 +72,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
-        send_email(user.user_email, 'Confirm Your Account', 'auth/email/confirm', user=user, token=token)
+        send_email(user.user_email, '确认邮件', 'auth/email/confirm', user=user, token=token)
         flash('确认邮件已经发送至你的邮箱 %s。' % form.user_email.data)
         return redirect(url_for('main.index'))
     return render_template('auth/register.html', form=form)
@@ -83,7 +83,7 @@ def register():
 def logout():
     # 调用Flask-Login中的logout_user()函数，删除并重设用户会话
     logout_user()
-    flash('You have been logged out.')
+    flash('你已经退出登录。')
     return redirect(url_for('main.index'))
 
 
@@ -93,9 +93,9 @@ def confirm(token):
     if current_user.confirmed:
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
-        flash('You have confirmed your account. Thanks!')
+        flash('你已经确认过你的邮件地址了!')
     else:
-        flash('The confirmation link is invalid or has expired.')
+        flash('确认邮件地址非法或已过期。')
     return redirect(url_for('main.index'))
 
 
@@ -119,7 +119,7 @@ def before_request():
 @login_required
 def resend_confirmation():
     token = current_user.generate_confirmation_token()
-    send_email(current_user.user_email, 'Confirm Your Account', 'auth/email/confirm', user=current_user, token=token)
+    send_email(current_user.user_email, '确认邮件', 'auth/email/confirm', user=current_user, token=token)
     flash('确认邮件已经发送至你的邮箱 %s。' % current_user.user_email)
     return redirect(url_for('main.index'))
 
