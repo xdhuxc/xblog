@@ -2,7 +2,9 @@
     {% for post in posts %}
         <li class="post">
             <div class="post-thumbnail">
-
+                <a href="{{ url_for('main.user', user_name=post.author.user_name) }}">
+                    <img class="img-rounded profile-thumbnail" src="{{ post.author.gravatar(size=40) }}">
+                </a>
             </div>
             <div class="post-content">
                 <div class="post-title">{{ post.post_title }}</div>
@@ -28,8 +30,11 @@
                             </a>
                         {% endif %}
                     {% endif %}
-                    <a href="{{ url_for('main.get_post', post_id=post.post_id) }}">
+                    <a href="{{ url_for('main.post', post_id=post.post_id) }}">
                         <span class="label label-default">永久链接</span>
+                    </a>
+                    <a href="{{ url_for('main.post', post_id=post.post_id) }}#comments">
+                        <span class="label label-primary">{{ post.comments.count() }} 条评论</span>
                     </a>
                 </div>
             </div>

@@ -182,7 +182,7 @@ class User(UserMixin, db.Model):
 
     def generate_email_change_token(self, new_email, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'change_email': self.user_id, 'new_email':new_email}).decode(charset)
+        return s.dumps({'change_email': self.user_id, 'new_email': new_email}).decode(charset)
 
     def change_email(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])

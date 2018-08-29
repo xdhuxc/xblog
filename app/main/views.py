@@ -147,8 +147,13 @@ def edit_profile_admin(user_id):
     return render_template('edit_profile.html', form=form, user=user)
 
 
-@main.route('/post/<int:post_id>')
-def get_post(post_id):
+@main.route('/post/<int:post_id>', methods=['GET', 'POST'])
+def post(post_id):
+    """
+    实例化一个评论表单，并将其传入post.html
+    :param post_id:
+    :return:
+    """
     post = Post.query.get_or_404(post_id)
     form = CommentForm()
     if form.validate_on_submit():
@@ -158,12 +163,16 @@ def get_post(post_id):
         db.session.add(comment)
         db.session.commit()
         flash('你的评论已经发表。')
-        return redirect(url_for('main.get_post', post_id=post.post_id, page=-1))
+        # page 参数设为 -1，这是个特殊的页数，用来请求评论的最后一页，所以刚提交的评论才会出现在页面上。
+        return redirect(url_for('main.post', post_id=post.post_id, page=-1))
     page = request.args.get('page', 1, type=int)
     if page == -1:
         page = (post.comments.count() - 1) / current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
+    pagination = post.comments.order_by(Comment.comment_timestamp.asc()).paginate(
+        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'], error_out=False)
+    comments = pagination.items
     # 这里必须要传入列表，因为只有这样，index.html和user.html引用的_posts.html模板才能在这个页面中使用
-    return render_template('post.html', posts=[post])
+    return render_template('post.html', posts=[post], form=form, comments=comments, pagination=pagination)
 
 
 @main.route('/edit/<int:post_id>', methods=['GET', 'POST'])
@@ -184,7 +193,7 @@ def edit_post(post_id):
         db.session.add(post)
         db.session.commit()
         flash('此博客文章已经更新。')
-        return redirect(url_for('main.get_post', post_id=post.post_id))
+        return redirect(url_for('main.post', post_id=post.post_id))
     form.post_title.data = post.post_title
     form.post_body.data = post.post_body
     return render_template('edit_post.html', form=form)
@@ -279,3 +288,18 @@ def show_followed():
     resp = make_response(redirect(url_for('main.index')))
     resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
     return resp
+
+
+@main.route('/moderate')
+@login_required
+@permission_required(Permission.MODERATE)
+def moderate():
+    """
+    评论管理路由
+    :return:
+    """
+    page = request.args.get('page', 1, type=int)
+    pagination = Comment.query.order_by(Comment.comment_timestamp.desc()).pagination(
+        page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'], error_our=False)
+    comments = pagination.items
+    return render_template('moderate.html', comments=comments, pagination=pagination, page=page)

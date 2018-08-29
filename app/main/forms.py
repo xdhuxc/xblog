@@ -80,5 +80,5 @@ class CommentForm(FlaskForm):
     """
     评论表单
     """
-    comment_body = TextAreaField('评论', validators=[DataRequired()])
+    comment_body = TextAreaField('', validators=[DataRequired()])
     submit = SubmitField('提交')
