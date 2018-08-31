@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import g
+from flask import jsonify
 from flask_httpauth import HTTPBasicAuth
 from ..models import AnonymousUser
 from ..models import User
@@ -58,4 +59,14 @@ def before_request():
     if not g.current_user.is_anonymous and not g.current_user.confirmed:
         return forbidden('未确认的账户')
 
-def
+
+@api.route('/token')
+def get_token():
+    """
+    生成认证令牌，由于这个路由也在蓝本中，所以添加到before_request处理程序上的认证机制也会用在这个路由上。
+    :return:
+    """
+    # 为了避免客户端使用旧令牌申请新令牌，要在视图函数中检查g.token_used变量的值。
+    if g.current_user.is_anonymous() or g.token_used:
+        return unauthorized('非法的认证。')
+    return jsonify({'token': g.current_user.generate_auth_token(expiration=3600), 'expiration': 3600})
