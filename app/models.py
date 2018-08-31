@@ -286,6 +286,30 @@ class User(UserMixin, db.Model):
                 db.session.add(user)
                 db.session.commit()
 
+    def generate_auth_token(self, expiration):
+        """
+        使用编码后的user_id字段值生成一个签名令牌，还指定了以秒为单位的过期时间。
+        :param expiration:
+        :return:
+        """
+        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'user_id': self.user_id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        """
+        接收的参数是一个令牌，如果令牌可用就返回对应的用户。
+        该方法为静态方法，因为只有解码令牌后才知道用户是谁。
+        :param token:
+        :return:
+        """
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['user_id'])
+
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
     %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
