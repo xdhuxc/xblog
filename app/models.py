@@ -15,6 +15,8 @@ from flask_login import AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 from flask import request
+from flask import url_for
+from .exceptions import ValidationError
 from . import db
 from . import login_manager
 
@@ -310,6 +312,27 @@ class User(UserMixin, db.Model):
             return None
         return User.query.get(data['user_id'])
 
+    def to_json(self):
+        """
+        把用户转换成JSON格式的序列化字典
+        :return:
+        """
+        json_user = {
+            'user_url': url_for('api.get_user', user_id=self.user_id, _external=True),
+            'user_name': self.user_name,
+            'user_email': self.user_email,
+            'register_date': self.register_date,
+            'last_access_date': self.last_access_date,
+            'user_location': self.user_location,
+            'user_real_name': self.user_real_name,
+            'user_description': self.user_description,
+            'gravatar_hash': self.gravatar_hash,
+            'user_posts': url_for('api.get_user_posts', user_id=self.user_id, _external=True),
+            'followed_posts': url_for('api.get_user_followed_posts', user_id=self.user_id, _external=True),
+            'post_count': self.posts.count()
+        }
+        return json_user
+
     """
     %r 调用 repr() 函数打印字符串，repr() 函数返回的字符串是加上了转义序列，是直接书写的字符串的形式。
     %s 调用 str() 函数打印字符串，str()函数返回原始字符串。
@@ -432,6 +455,33 @@ class Post(db.Model):
             markdown(value, output_format='html'),
             tags=allowed_tags,
             strip=True))
+
+    def to_json(self):
+        """
+        把文章转换为JSON格式的序列化字典
+        :return:
+        """
+        json_post = {
+            'post_url': url_for('api.get_post', post_id=self.post_id, _external=True),
+            'post_title': self.post_title,
+            'post_body': self.post_body,
+            'post_body_html': self.post_body_html,
+            'post_timestamp': self.post_timestamp,
+            'author': url_for('api.get_user', user_id=self.author_id, _external=True),
+            'comments': url_for('api.get_post_comments', post_id=self.post_id, _external=True),
+            'comment_count': self.comments.count()
+        }
+        return json_post
+
+    @staticmethod
+    def from_json(json_post):
+        post_title = json_post.get('post_title')
+        if post_title is None or post_title == '':
+            raise ValidationError('文章必须含有标题。')
+        post_body = json_post.get('post_body')
+        if post_body is None or post_body == '':
+            raise ValidationError('文章必须含有内容。')
+        return Post(post_title=post_title, post_body=post_body)
 
     def __repr__(self):
         return '%r' % {'Post': (self.post_id, self.post_title, self.post_body, self.post_timestamp,

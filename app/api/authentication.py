@@ -67,6 +67,6 @@ def get_token():
     :return:
     """
     # 为了避免客户端使用旧令牌申请新令牌，要在视图函数中检查g.token_used变量的值。
-    if g.current_user.is_anonymous() or g.token_used:
+    if g.current_user.is_anonymous or g.token_used:
         return unauthorized('非法的认证。')
     return jsonify({'token': g.current_user.generate_auth_token(expiration=3600), 'expiration': 3600})

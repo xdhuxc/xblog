@@ -42,6 +42,25 @@ VALUE' at row 496
 
 (venv) E:\PycharmProject\xblog>
 ```
+### httpie的使用
+1、访问REST API
+```angularjs
+E:\PycharmProject\xblog>http --auth xdhuxc@163.com:dog --json GET http://127.0.0.1:5000/api/v1/token
+HTTP/1.0 200 OK
+Content-Length: 170
+Content-Type: application/json
+Date: Sun, 02 Sep 2018 02:36:48 GMT
+Server: Werkzeug/0.14.1 Python/2.7.14
+
+{
+    "expiration": 3600,
+    "token": "eyJhbGciOiJIUzI1NiIsImV4cCI6MTUzNTg1OTQwOCwiaWF0IjoxNTM1ODU1ODA4fQ.eyJ1c2VyX2lkIjoyfQ.U4xEpZ35WxYknqJy5rsEo1lywabBnS9F-NXZVNKnJHk"
+}
+```
+### coverage命令的使用
+```angularjs
+python manage.py test coverage
+```
 
 ### 常见问题及解决
 1、安装 mysql-python 时，报错如下：
