@@ -11,6 +11,7 @@ from app.models import Post
 import unittest
 import logging
 import threading
+import re
 
 
 class SeleniumTestCase(unittest.TestCase):
@@ -18,6 +19,11 @@ class SeleniumTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        setUpClass()类方法在这个类中的全部测试运行前执行
+        :return:
+        """
+
         # 启动浏览器
         try:
             cls.client = webdriver.Chrome()
@@ -41,7 +47,7 @@ class SeleniumTestCase(unittest.TestCase):
 
         # 添加管理员
         admin_role = Role.query.filter_by(permission=0xff).first_or_404()
-        admin = User(user_email='xdhuxc@163.com', user_name='wanghuan',password='cat', role=admin_role, confirmed=True)
+        admin = User(user_email='xdhuxc@163.com', user_name='wanghuan', password='cat', role=admin_role, confirmed=True)
         db.session.add(admin)
         db.session.commit()
 
@@ -50,6 +56,11 @@ class SeleniumTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        tearDownClass()类方法在这个类中的全部测试运行后执行。
+        :return:
+        """
+
         if cls.client:
             # 关闭Flask服务器和浏览器
             cls.client.get('http://localhost:5000/shutdown')
@@ -68,6 +79,27 @@ class SeleniumTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_admin_home_page(self):
+        # 进入首页
+        self.client.get('http://localhost:5000/')
+        self.assertTrue(re.search('Hello,\s+Stranger', self.client.page_source))
+
+        # 进入登录页面
+        self.client.find_element_by_link_text('登录').click()
+        self.assertTrue('<h1>登录</h1>' in self.client.page_source)
+
+        # 登录
+        self.client.find_element_by_name('user_email').send_keys('xdhuxc@163.com')
+        self.client.find_element_by_name('password').send_keys('cat')
+        self.client.find_element_by_name('submit').click()
+        self.assertTrue(re.search('Hello,\s+wanghuan!', self.client.page_source))
+
+        # 进入用户个人资料页面
+        self.client.find_element_by_link_text('个人资料').click()
+        self.assertTrue('<h1>wanghuan</h1>' in self.client.page_source)
+
+
 
 
 
