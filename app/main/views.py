@@ -12,6 +12,7 @@ from flask import request
 from flask_login import login_required
 from flask_login import current_user
 from flask import current_app
+from flask_sqlalchemy import get_debug_queries
 
 from . import main
 from .. import db
@@ -33,6 +34,20 @@ from ..decorators import permission_required
 url_for()函数还支持一种简写的端点形式，在蓝本中可以省略蓝本名，例如url_for('.index')，在这种写法中，命名空间是当前请求所在的蓝本。
 这意味着同一蓝本中的重定向可以使用简写形式，但是跨蓝本的重定向必须使用带有命名空间的端点名。
 """
+
+
+@main.after_app_request
+def after_request(response):
+    """
+    在视图函数处理完请求之后执行，Flask把响应对象传给after_app_request处理程序，以防需要修改响应。
+    :param response:
+    :return:
+    """
+    for query in get_debug_queries():
+        if query.duration >= current_app.config['FLASKY_DB_QUERY_TIMEOUT']:
+            current_app.logger.warning('慢查询：%s\n参数：%s\n持续时间：%fs\n上下文：%s\n' %
+                                       (query.statement, query.parameters, query.duration, query.context))
+    return response
 
 
 # 路由修饰器由蓝本提供
@@ -340,7 +355,6 @@ def moderate_disable(comment_id):
 @main.route('/shutdown')
 def server_shutdown():
     """
-
     :return:
     """
     if not current_app.testing:

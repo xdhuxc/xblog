@@ -33,7 +33,10 @@ from flask_script import Manager
 from flask_script import Shell
 from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
+from flask_migrate import upgrade
 
+# 获取当前文件所在目录
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = create_app(os.environ.get('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -73,7 +76,6 @@ def test(coverage):
         cov.save()
         print('代码覆盖总结：'.decode(charset))
         cov.report()
-        basedir = os.path.abspath(os.path.dirname(__file__))
         covdir = os.path.join(basedir, 'tmp\coverage')
         cov.html_report(directory=covdir)
         print('HTML版本：file:\\\\%s\index.html'.decode(charset) % covdir)
@@ -87,6 +89,36 @@ def initdb():
     :return:
     """
     db.create_all()
+
+
+@manager.command
+def profile(length=25):
+    """
+    在请求分析器的监视下运行程序
+    :param length:
+    :return:
+    """
+    profile_dir = os.path.join(basedir, 'tmp\profile')
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[length])
+    app.run()
+
+
+@manager.command
+def deploy():
+    """
+    运行部署命令
+    :return:
+    """
+    # 把数据库迁移到最新修订版本
+    upgrade()
+
+    # 创建用户角色
+    Role.insert_roles()
+    # 所有用户都关注自己
+    User.add_self_follows()
+
+
 
 
 if __name__ == '__main__':
