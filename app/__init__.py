@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from flask_login import LoginManager
 from flask_pagedown import PageDown
+from flask_sslify import SSLify
 from config import config
 
 
@@ -45,6 +46,9 @@ def create_app(config_name):
     db.init_app(app)
     login_manager.init_app(app)
     pagedown.init_app(app)
+
+    if app.config['SSL_ENABLE']:
+        sslify = SSLify(app)
 
     # 路由和自定义错误页面
     from .main import main as main_blueprint

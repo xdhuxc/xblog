@@ -4,6 +4,10 @@
 import os
 import logging
 from logging.handlers import SMTPHandler
+from logging import StreamHandler
+from logging.handlers import SysLogHandler
+from werkzeug.contrib.fixers import ProxyFix
+
 
 # 得到当前文件的上一级目录
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -30,10 +34,10 @@ class Config:
     SQLALCHEMY_RECORD_QUERIES = True  # 启用记录查询统计数字功能
 
     FLASKY_DB_QUERY_TIMEOUT = 0.5  # 设置缓慢查询的阈值为0.5秒。
-    FLASKY_POSTS_PER_PAGE = os.environ.get('FLASKY_POSTS_PER_PAGE') or 10
-    FLASKY_FOLLOWERS_PER_PAGE = os.environ.get('FLASKY_FOLLOWERS_PER_PAGE') or 10
-    FLASKY_COMMENTS_PER_PAGE = os.environ.get('FLASKY_COMMENTS_PER_PAGE') or 10
-    FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
+    FLASKY_POSTS_PER_PAGE = os.environ.get('FLASKY_POSTS_PER_PAGE') or 10          # 博客文章每页的记录数
+    FLASKY_FOLLOWERS_PER_PAGE = os.environ.get('FLASKY_FOLLOWERS_PER_PAGE') or 10  # 粉丝列表每页的记录数
+    FLASKY_COMMENTS_PER_PAGE = os.environ.get('FLASKY_COMMENTS_PER_PAGE') or 10    # 每页显示的评论数
+    FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'                                        # 邮件前缀
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN') or 'wanghuanand@sohu.com'
 
     # 邮箱配置
@@ -42,6 +46,9 @@ class Config:
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '25'))
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME', 'wanghuanand')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', 'Wanghuan1994')
+
+    # 默认不使用SSL
+    SSL_ENABLE = False
 
     def __init__(self):
         pass
@@ -91,10 +98,56 @@ class ProductionConfig(Config):
             app.logger.addHandler(mail_handler)
 
 
+class BandwagonHostConfig(ProductionConfig):
+    """
+    在BandwagonHost中部署时的配置
+    """
+    @staticmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+        # 处理代理服务器
+        # 添加ProxyFix等WSGI中间件的方法是包装WSGI程序，收到请求时，中间件有机会审查环境，在处理请求之前做些修改。
+        app.wsgi_app = ProxyFix(app.wsgi_app)
+        # 输出到标准错误输出
+        stream_handler = StreamHandler()
+        stream_handler.setLevel(logging.WARNING)
+        app.logger.addHandler(stream_handler)
+
+
+class LinuxConfig(ProductionConfig):
+    """
+    在linux系统下的配置
+    """
+    @staticmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+
+        # 写入系统日志，配置之后，程序的日志会写入/var/log/messages
+        syslog_handler = SysLogHandler()
+        syslog_handler.setLevel(logging.WARNING)
+        app.logger.addHandler(syslog_handler)
+
+
+class DockerConfig(ProductionConfig):
+    """
+    使用docker容器运行时的配置
+    """
+    @staticmethod
+    def init_app(cls, app):
+        ProductionConfig.init_app(app)
+
+        # 将日志输出到标准输出
+        stream_handler = StreamHandler()
+        stream_handler.setLevel(logging.WARNING)
+        app.logger.addHandler(stream_handler)
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-
+    'bandwagon': BandwagonHostConfig,
+    'unix': LinuxConfig,
+    'docker': DockerConfig,
     'default': DevelopmentConfig
 }

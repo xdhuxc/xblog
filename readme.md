@@ -155,6 +155,75 @@ g\venv\include\site\python2.7\mysql-python" failed with error code 1 in c:\users
 ```
 解决：到 https://www.lfd.uci.edu/~gohlke/pythonlibs/#mysql-python 下载相应的包，例如，MySQL_python‑1.2.5‑cp27‑none‑win_amd64.whl，使用pip安装之，然后继续安装即可。
 
+### 在linux下执行pip install -r requirements.txt时，报错如下：
+```angular2html
+Collecting MySQL-python==1.2.5 (from -r requirements.txt (line 33))
+  Using cached https://files.pythonhosted.org/packages/a5/e9/51b544da85a36a68debe7a7091f068d802fc515a3a202652828c73453cad/MySQL-python-1.2.5.zip
+    Complete output from command python setup.py egg_info:
+    sh: mysql_config: command not found
+    Traceback (most recent call last):
+      File "<string>", line 1, in <module>
+      File "/tmp/pip-build-4qxBnK/MySQL-python/setup.py", line 17, in <module>
+        metadata, options = get_config()
+      File "setup_posix.py", line 43, in get_config
+        libs = mysql_config("libs_r")
+      File "setup_posix.py", line 25, in mysql_config
+        raise EnvironmentError("%s not found" % (mysql_config.path,))
+    EnvironmentError: mysql_config not found
+    
+    ----------------------------------------
+Command "python setup.py egg_info" failed with error code 1 in /tmp/pip-build-4qxBnK/MySQL-python/
+```
+解决：使用如下命令安装mysql-devel
+```angular2html
+yum -y install mysql-devel
+```
+
+报错如下：
+```angular2html
+Installing collected packages: MySQL-python
+  Running setup.py install for MySQL-python ... error
+    Complete output from command /usr/bin/python2 -u -c "import setuptools, tokenize;__file__='/tmp/pip-install-YdXPnf/MySQL-python/setup.py';f=getattr(tokenize, 'open', open)(__file__);code=f.read().replace('\r\n', '\n');f.close();exec(compile(code, __file__, 'exec'))" install --record /tmp/pip-record-XO9KAe/install-record.txt --single-version-externally-managed --compile:
+    running install
+    running build
+    running build_py
+    creating build
+    creating build/lib.linux-x86_64-2.7
+    copying _mysql_exceptions.py -> build/lib.linux-x86_64-2.7
+    creating build/lib.linux-x86_64-2.7/MySQLdb
+    copying MySQLdb/__init__.py -> build/lib.linux-x86_64-2.7/MySQLdb
+    copying MySQLdb/converters.py -> build/lib.linux-x86_64-2.7/MySQLdb
+    copying MySQLdb/connections.py -> build/lib.linux-x86_64-2.7/MySQLdb
+    copying MySQLdb/cursors.py -> build/lib.linux-x86_64-2.7/MySQLdb
+    copying MySQLdb/release.py -> build/lib.linux-x86_64-2.7/MySQLdb
+    copying MySQLdb/times.py -> build/lib.linux-x86_64-2.7/MySQLdb
+    creating build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/__init__.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/CR.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/FIELD_TYPE.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/ER.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/FLAG.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/REFRESH.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    copying MySQLdb/constants/CLIENT.py -> build/lib.linux-x86_64-2.7/MySQLdb/constants
+    running build_ext
+    building '_mysql' extension
+    creating build/temp.linux-x86_64-2.7
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -Dversion_info=(1,2,5,'final',1) -D__version__=1.2.5 -I/usr/include/mysql -I/usr/include/python2.7 -c _mysql.c -o build/temp.linux-x86_64-2.7/_mysql.o
+    _mysql.c:29:20: fatal error: Python.h: No such file or directory
+     #include "Python.h"
+                        ^
+    compilation terminated.
+    error: command 'gcc' failed with exit status 1
+    
+    ----------------------------------------
+Command "/usr/bin/python2 -u -c "import setuptools, tokenize;__file__='/tmp/pip-install-YdXPnf/MySQL-python/setup.py';f=getattr(tokenize, 'open', open)(__file__);code=f.read().replace('\r\n', '\n');f.close();exec(compile(code, __file__, 'exec'))" install --record /tmp/pip-record-XO9KAe/install-record.txt --single-version-externally-managed --compile" failed with error code 1 in /tmp/pip-install-YdXPnf/MySQL-python/
+```
+解决：使用如下命令安装python-devel
+```angular2html
+yum install -y python-devel
+```
+ 
+
 2、运行程序时，报错如下：
 ```angularjs
 Traceback (most recent call last):
