@@ -413,3 +413,11 @@ charset = 'utf-8'
 reload(sys)
 sys.setdefaultencoding(charset)
 ```
+
+### 部署
+1、将程序包除venv外复制到机器上，重新生成虚拟环境，安装依赖包
+2、准备数据库
+1）初始化数据库
+```angularjs
+python xblog.py initdb
+```

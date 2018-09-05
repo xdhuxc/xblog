@@ -102,7 +102,7 @@ class BandwagonHostConfig(ProductionConfig):
     """
     在BandwagonHost中部署时的配置
     """
-    @staticmethod
+    @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
         # 处理代理服务器
@@ -118,7 +118,7 @@ class LinuxConfig(ProductionConfig):
     """
     在linux系统下的配置
     """
-    @staticmethod
+    @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
 
@@ -132,7 +132,7 @@ class DockerConfig(ProductionConfig):
     """
     使用docker容器运行时的配置
     """
-    @staticmethod
+    @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
 
@@ -147,7 +147,8 @@ config = {
     'testing': TestingConfig,
     'production': ProductionConfig,
     'bandwagon': BandwagonHostConfig,
-    'unix': LinuxConfig,
+    'linux': LinuxConfig,
     'docker': DockerConfig,
-    'default': DevelopmentConfig
+
+    'default': LinuxConfig
 }

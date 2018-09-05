@@ -92,6 +92,15 @@ def initdb():
 
 
 @manager.command
+def dropdb():
+    """
+    以命令方式初始化数据库
+    :return:
+    """
+    db.drop_all()
+
+
+@manager.command
 def profile(length=25):
     """
     在请求分析器的监视下运行程序
