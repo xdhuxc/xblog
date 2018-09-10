@@ -426,8 +426,6 @@ python xblog.py initdb
 ### gunicorn
 部署命令为：
 ```angularjs
-gunicorn -b 0.0.0.0:8080 --workers=4 --access-logfile /root/app.log xblog:app 
+gunicorn -b 0.0.0.0:8080 --workers=3 --access-logfile /root/app.log xblog:app 
 ```
 
-### 常用命令
-1、修改mysql数据库密码
