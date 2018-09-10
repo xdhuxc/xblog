@@ -79,6 +79,9 @@ class ProductionConfig(Config):
     @classmethod
     def init_app(cls, app):
         Config.init_app(app)
+        # 处理代理服务器
+        # 添加ProxyFix等WSGI中间件的方法是包装WSGI程序，收到请求时，中间件有机会审查环境，在处理请求之前做些修改。
+        app.wsgi_app = ProxyFix(app.wsgi_app)
         # 把错误通过电子邮件发送给管理员
         credentials = None
         secure = None
@@ -105,9 +108,6 @@ class BandwagonHostConfig(ProductionConfig):
     @classmethod
     def init_app(cls, app):
         ProductionConfig.init_app(app)
-        # 处理代理服务器
-        # 添加ProxyFix等WSGI中间件的方法是包装WSGI程序，收到请求时，中间件有机会审查环境，在处理请求之前做些修改。
-        app.wsgi_app = ProxyFix(app.wsgi_app)
         # 输出到标准错误输出
         stream_handler = StreamHandler()
         stream_handler.setLevel(logging.WARNING)

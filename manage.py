@@ -3,12 +3,7 @@
 
 import os
 import sys
-from dotenv import get_variables
 
-# 加载环境变量
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(dotenv_path):
-    get_variables(dotenv_path)
 
 charset = os.environ.get('CHARSET') or 'utf-8'
 reload(sys)
